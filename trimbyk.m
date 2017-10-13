@@ -1,0 +1,9 @@
+function f=trimbyk(A)%,k)
+k=4;
+%[a,b]=size(A);
+a=20;
+b=10;
+A=reshape(A,a,b);
+A=A(k+1:end-k,k+1:end-k);
+A=reshape(A,(a-2*k)*(b-2*k),1);
+f=A;
