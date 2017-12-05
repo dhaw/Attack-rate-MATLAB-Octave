@@ -23,9 +23,9 @@ addbit=0;%seed;%********SEED IN FSC********
 %Prow=binopdf((0:10),4500,1/1000);
 %Prow=[0,0,0,.1,.5,.3,.1];%Chaotic?
 %Prow=ones(1,100);
-Prow=[0,0,.5*eps,eps,1-3*eps,eps,.5*eps];
+%Prow=[0,0,.5*eps,eps,1-3*eps,eps,.5*eps];
 %Prow=[0,0,eps,eps,1-4*eps,eps,eps];
-%Prow=[eps,eps,eps,eps,eps,1-8*eps,eps,eps,eps,eps,eps];
+Prow=[eps,eps,eps,eps,1-8*eps,eps,eps,eps,eps];
 lp=length(Prow);
 Prow=Prow/sum(Prow);
 %%
@@ -81,7 +81,7 @@ zn=zeros(nbar,1);
 for t=1:lt
     if solvetype==1%FSC
     %IC=.5+.1*rand(nbar,1);
-    IC=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,D,Z0,beta,t0,tend,zn,phi1,phi2,seed,t,2); IC=IC./NN0;
+    IC=XODEsolveAllMulti(gamma,NN,nbar,NNbar,NNrep,NN0,D,Z0,beta,t0,tend,zn,phi1,phi2,seed,t,2); IC=IC./NN0;
     if agemix~=1
         IC=IC+.2*(1+rand(nbar,1)).*(1-IC);
     end
