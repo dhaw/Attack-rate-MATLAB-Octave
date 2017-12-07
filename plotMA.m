@@ -1,7 +1,7 @@
 function f=plotMA(A,Acum,NN)
 fs=15;%Font size: 30 for large
 tauend=size(A,2);
-newend=min(tauend,2000);
+newend=min(tauend,500);
 cell=6;
 Ni=repmat(NN,1,tauend);
 B=sum(Acum.*Ni,1)/sum(NN);
