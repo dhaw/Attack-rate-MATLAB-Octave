@@ -6,7 +6,7 @@ R0=1.8; gamma=1/2.6;
 NN=1000; n=length(NN);
 demog=1;%Ageing: 1=on
 agemix=1;%Total homog: =0; else specify v - twice
-tauend=500;
+tauend=1000;
 time=(1:tauend);
 lt=length(time);
 t0=0; tend=5000;
@@ -23,8 +23,8 @@ addbit=0;%seed;%********SEED IN FSC********
 %Prow=binopdf((0:10),4500,1/1000);
 %Prow=[0,0,0,.1,.5,.3,.1];%Chaotic?
 %Prow=ones(1,100);
-Prow=[0,0,.5*eps,eps,1-3*eps,eps,.5*eps];
-%Prow=[0,0,eps,eps,1-4*eps,eps,eps];
+%Prow=[0,0,.5*eps,eps,1-3*eps,eps,.5*eps];
+Prow=[0,0,0,0,eps,1-eps];
 %Prow=[eps,eps,eps,eps,eps,1-8*eps,eps,eps,eps,eps,eps];
 lp=length(Prow);
 Prow=Prow/sum(Prow);
