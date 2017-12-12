@@ -1,6 +1,8 @@
 function f=plotMA(A,Acum,NN)
 fs=15;%Font size: 30 for large
 tauend=size(A,2);
+newend=min(tauend,800);
+newstart=201;
 cell=6;
 Ni=repmat(NN,1,tauend);
 B=sum(Acum.*Ni,1)/sum(NN);
@@ -21,7 +23,6 @@ NA=[NN,A]; NA=sortrows(NA,1); A=NA(:,2:end);
 Nsort=sortrows(NN); [maxN,cellm]=max(Nsort);
 %cellm=200;
 %f=Nsort(cellm);
-
 %
 figure
 %hold on
@@ -48,17 +49,19 @@ if n>1
 else
     y1=Acum; y2=A; thismany=1; cc=[.447,.553,.647];
 end
-T=1:tauend;
+
+y1=y1(:,newstart:newend); y2=y2(:,newstart:newend);
+T=(newstart:newend);
 hold on
 for i=1:thismany%Yes, this loop is clonky
-    plot(T,y1(i,:),'o-','linewidth',1.5,'color',cc(i,:));
-    plot(T,y2(i,:),'o:','linewidth',1.5,'color',cc(i,:));
+    plot(T,y1(i,:),'o-','linewidth',1.5,'color',[.5,.5,.5])%cc(i,:));
+    plot(T,y2(i,:),'o-','linewidth',1.5,'color',[0,0,0])%cc(i,:));
 end
 xlabel('Time (years)','FontSize',fs)
 ylabel('Proportion immune','FontSize',fs)
 set(gca,'FontSize',fs);
 maxY=max(max([y1;y2])); maxY=min(maxY+.1,1);%+.1
-axis([1,tauend,0,maxY])
+axis([newstart-1,newend,0,maxY])
 grid on
 if n>1
     colorbar

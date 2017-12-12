@@ -6,7 +6,7 @@ R0=1.8; gamma=1/2.6;
 NN=1; n=length(NN);
 demog=1;%Ageing: 1=on
 agemix=1;%Total homog: =0; else specify v - twice
-tauend=1000;
+tauend=200;
 time=(1:tauend);
 lt=length(time);
 t0=0; tend=5000;
