@@ -1,4 +1,4 @@
-function [f,g]=finalSizeMulti(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,beta,isdual,solvetype,numseed)%,NNbar)
+function [f,g]=finalSizeMultiAge(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,beta,isdual,solvetype,numseed)%,NNbar)
 %ZfinalSizeAllMulti2
 %isdual: 0=SM, 1=DM, 2=IM
 %solvetype: 1=FSC, 2=ODE, 3=SCM
@@ -9,15 +9,13 @@ mu=0;%In ODE code
 NN0=NNrep; NN0(NNrep==0)=1;
 Nages=NNbar./NN0;
 t0=0; tend=360;
-
-R0=1.8;
-
+fx=zeros(n,lt); gx=zeros(n,na,lt);
 %
 %Theta:
-eps=.13;
+eps=.05;
 %Prow=poisspdf((0:10),5);
-%Prow=binopdf((0:10),45,1/10);
-Prow=[0,0,0,0,eps,1-eps];%Chaotic?
+Prow=binopdf((0:10),45,1/10);
+%Prow=[0,0,0,0,1];%Chaotic?
 %Prow=[0,0,0,eps,1-2*eps,eps];
 %Prow=[0,0,0,0,0,eps,1-2*eps,eps];
 %Prow=1/11*ones(1,11);
@@ -35,7 +33,7 @@ N0=NN; N0(NN==0)=1;
 %
 Ni=repmat(NNrep,1,nbar); Nj=Ni';
 Niover=1./Ni; Niover(Ni==0)=1; Njover=Niover';
-Mj=(Kbar')*NNbar;%C in denom?? .*Cbar %(Kbar')*
+Mj=Kbar'*NNbar;
 Mj(Mj==0)=1;
 Mjover=1./Mj;
 Mjover=repmat(Mjover',nbar,1);
@@ -63,26 +61,25 @@ phi1=1; phi2=0;
 %NNprob=NNbar/sum(NN);
 %NNprob=ones(nbar,1)/sum(NNbar);
 seed=numseed;%*NNprob;
-
-thresh=1-1/R0;
-
-for t=1:lt    
+for t=1:lt
     if solvetype==1
     %Final size:
     addbit=0;%seed;%tend*
     %If seed=0, no epidemic happens - because use ODE solver for initial condition
-    IC=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,Z0,beta,ages0,t,t0,tend,zn,phi1,phi2,seed,2,thresh); IC=IC./NN0;%New IC here (if ever necessary)
+    IC=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,Z0,beta,ages0,t,t0,tend,zn,phi1,phi2,seed,2); IC=IC./NN0;%New IC here (if ever necessary)
     options = optimset('Display','off');
     funt=@(Zi)solveZi(Zi,Z0,beta,gamma,D,Nages,addbit);
     Zsol=fsolve(funt,IC,options);
     %
     else%solvetype=2/3
-    Zsol=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,Z0,beta,ages0,t,t0,tend,zn,phi1,phi2,seed,solvetype,thresh);
+    Zsol=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,Z0,beta,ages0,t,t0,tend,zn,phi1,phi2,seed,solvetype);
     Zsol=Zsol./NN0;
     end
     nu=Zsol-Z0;
-    A1(:,t)=sum(reshape(Zsol,n,na),2);%Prop immune for spatial cell (before antigenic drift)
-    A2(:,t)=sum(reshape(nu,n,na),2);%AR for spatial cell
+    A1age=reshape(Zsol,n,na);
+    A1(:,t)=sum(rA1age,2);%Prop immune for spatial cell (before antigenic drift)
+    A2age=reshape(nu,n,na);
+    A2(:,t)=sum(A2age,2);%AR for spatial cell
     %
     %Assign immunity:
     Bhat=[B(:,2:end),zeros(nbar,1)];
@@ -94,11 +91,13 @@ for t=1:lt
     B=B-BVtake+BVadd; B(1:n,1)=B(1:n,1)+Bsus;
     %}
     Z0=sum(B(:,2:end),2)*(1-mu);
+    fx(:,t)=A1;
+    gx(:,:,t)=A1age;
 end
 %%
 %}
-f=A1;
-g=A2;
+f=fx;%A1;
+g=gx;%A1age;%A2; %Only 1 year for now
 end
 
 function f=solveZi(Zi,Z0,beta,gamma,D,Nages,addbit)
@@ -106,18 +105,14 @@ lZi=log(Nages-Zi); lZi(Zi>1)=NaN;
 f=lZi-log(Nages-Z0)+beta/gamma*D*(Zi-Z0)+addbit;
 end
 %%
-function f=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,ic,beta,ages0,tau,t0,tend,zn,phi1,phi2,seed,solvetype,thresh)
+function f=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,ic,beta,ages0,tau,t0,tend,zn,phi1,phi2,seed,solvetype)
 icR=ic.*NNrep;
 y0=[NNbar-icR;zn;icR];
-cond=sum(icR<thresh);
-if cond==0
-    seed=0;
-end
 %
 if solvetype==2
 [tout,yout]=ode45(@(t,y)integr8all(t,y,beta,gamma,n,nbar,NN,NN0,D,seed,phi1,phi2),[t0,tend],y0);
-%Incidence curve in here:
-%{
+%Incidence curve in here (code at bottom)
+%
 figure
 %fs=15; lw=2
 fs=12; lw=2;
@@ -211,36 +206,3 @@ if sum(isnan(R))>0
     fuck=1;
 end
 end
-
-%Incidence curve:
-%{
-if tau==10
-figure
-fs=15;
-Y=yout(:,nbar+1:2*nbar);
-Y=Y(:,1:n)+Y(:,n+1:2*n)+Y(:,2*n+1:3*n)+Y(:,3*n+1:end);
-Nover=1./NN; Nover(NN==0)=0; Y=Y.*repmat(Nover',length(tout),1);
-X=[NN,Y']; X=sortrows(X,1); Nsort=X(:,1); X=X(:,2:end); X=X';
-hold on
-k=100; nk=floor(n/k);
-cmap=parula(nk);
-colormap(cmap);
-for i=1:nk
-    plot(tout,X(:,i*100),'-','linewidth',2,'color',cmap(i,:));
-end
-xlabel('Time (days)','FontSize',fs);
-ylabel('Infectives','FontSize',fs);
-set(gca,'FontSize',fs);
-axis([0,tend,0,max(max(X))])
-end
-
-figure
-fs=15;
-Y=yout(:,nbar+1:2*nbar);
-Y=sum(Y,2);
-plot(tout,Y,'-','linewidth',2,'color',[.447,.553,.647]);
-xlabel('Time (days)','FontSize',fs);
-ylabel('Infectives','FontSize',fs);
-set(gca,'FontSize',fs);
-axis([0,tend,0,max(Y)])
-%}

@@ -1,4 +1,4 @@
-function [f,g]=finalSizeMulti(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,beta,isdual,solvetype,numseed)%,NNbar)
+function [f,g]=finalSizeMultiTest(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,beta,isdual,solvetype,numseed)%,NNbar)
 %ZfinalSizeAllMulti2
 %isdual: 0=SM, 1=DM, 2=IM
 %solvetype: 1=FSC, 2=ODE, 3=SCM
@@ -9,15 +9,12 @@ mu=0;%In ODE code
 NN0=NNrep; NN0(NNrep==0)=1;
 Nages=NNbar./NN0;
 t0=0; tend=360;
-
-R0=1.8;
-
 %
 %Theta:
-eps=.13;
+eps=.05;
 %Prow=poisspdf((0:10),5);
-%Prow=binopdf((0:10),45,1/10);
-Prow=[0,0,0,0,eps,1-eps];%Chaotic?
+Prow=binopdf((0:10),45,1/10);
+%Prow=[0,0,0,0,1];%Chaotic?
 %Prow=[0,0,0,eps,1-2*eps,eps];
 %Prow=[0,0,0,0,0,eps,1-2*eps,eps];
 %Prow=1/11*ones(1,11);
@@ -63,21 +60,18 @@ phi1=1; phi2=0;
 %NNprob=NNbar/sum(NN);
 %NNprob=ones(nbar,1)/sum(NNbar);
 seed=numseed;%*NNprob;
-
-thresh=1-1/R0;
-
-for t=1:lt    
+for t=1:lt
     if solvetype==1
     %Final size:
     addbit=0;%seed;%tend*
     %If seed=0, no epidemic happens - because use ODE solver for initial condition
-    IC=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,Z0,beta,ages0,t,t0,tend,zn,phi1,phi2,seed,2,thresh); IC=IC./NN0;%New IC here (if ever necessary)
+    IC=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,Z0,beta,ages0,t,t0,tend,zn,phi1,phi2,seed,2); IC=IC./NN0;%New IC here (if ever necessary)
     options = optimset('Display','off');
     funt=@(Zi)solveZi(Zi,Z0,beta,gamma,D,Nages,addbit);
     Zsol=fsolve(funt,IC,options);
     %
     else%solvetype=2/3
-    Zsol=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,Z0,beta,ages0,t,t0,tend,zn,phi1,phi2,seed,solvetype,thresh);
+    Zsol=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,Z0,beta,ages0,t,t0,tend,zn,phi1,phi2,seed,solvetype);
     Zsol=Zsol./NN0;
     end
     nu=Zsol-Z0;
@@ -88,7 +82,7 @@ for t=1:lt
     Bhat=[B(:,2:end),zeros(nbar,1)];
     B=Bhat+repmat(nu,1,lp).*Pmat;
     %Age the populations:
-    %
+    %{
     BVtake=B.*V; Bsus=sum(BVtake(1:n,2:end),2);
     BVadd=[zeros(n,lp);BVtake(1:3*n,:)].*W;
     B=B-BVtake+BVadd; B(1:n,1)=B(1:n,1)+Bsus;
@@ -106,17 +100,13 @@ lZi=log(Nages-Zi); lZi(Zi>1)=NaN;
 f=lZi-log(Nages-Z0)+beta/gamma*D*(Zi-Z0)+addbit;
 end
 %%
-function f=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,ic,beta,ages0,tau,t0,tend,zn,phi1,phi2,seed,solvetype,thresh)
+function f=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,ic,beta,ages0,tau,t0,tend,zn,phi1,phi2,seed,solvetype)
 icR=ic.*NNrep;
 y0=[NNbar-icR;zn;icR];
-cond=sum(icR<thresh);
-if cond==0
-    seed=0;
-end
 %
 if solvetype==2
 [tout,yout]=ode45(@(t,y)integr8all(t,y,beta,gamma,n,nbar,NN,NN0,D,seed,phi1,phi2),[t0,tend],y0);
-%Incidence curve in here:
+%Incidence curve in here (code at bottom)
 %{
 figure
 %fs=15; lw=2

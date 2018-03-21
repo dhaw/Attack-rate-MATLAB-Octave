@@ -1,9 +1,9 @@
 function [F,G]=bifEpsilon%(F,G)
 tauend=1000;%As MA1d
 solvetype=2;
-burn=600;
+burn=400;
 %eps=[(0:.005:.05),(.051:.001:.3),(.305:.005:.6),(.601:.001:.9),(.905:.005:1)];2
-eps=(0:.005:.5);
+eps=(0:.05:1);
 leps=length(eps);
 %Comment out if input Fs and Gs
 %
@@ -17,7 +17,7 @@ for i=1:leps
     F(i,:)=g1(1,burn+1:end); G(i,:)=g1(2,burn+1:end);
 end
 %}
-fs=15; lw=3; ms=1; col1=[0,0,0]; col2=[.5,.5,.5];
+fs=15; lw=3; ms=4; col1=[0,0,0]; col2=[.5,.5,.5];
 figure
 hold on
 for i=1:leps
@@ -28,7 +28,7 @@ for i=1:leps
     %epsi2=eps(i)*ones(length(ui2),1);
     %plot(epsi2,ui2,'o','color',col2,'markersize',ms);
 end
-maxF=max(max([F;G]));
+maxF=max(max(F));
 axis([eps(1),eps(end),0,maxF])
 xlabel('\epsilon','fontsize',fs)
 ylabel('z','fontsize',fs,'rot',0)

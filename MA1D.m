@@ -3,10 +3,10 @@ function [f,g,other]=MA1D(solvetype,start,eps)
 %solvetype: 1=FSC, 2=ODE, 3=SCM
 %Parameters:
 R0=1.8; gamma=1/2.6;
-NN=1; n=length(NN);
+NN=1000; n=length(NN);
 demog=1;%Ageing: 1=on
 agemix=1;%Total homog: =0; else specify v - twice
-tauend=1000;
+tauend=100;
 time=(1:tauend);
 lt=length(time);
 t0=0; tend=5000;
@@ -24,7 +24,7 @@ addbit=0;%seed;%********SEED IN FSC********
 %Prow=[0,0,0,.1,.5,.3,.1];%Chaotic?
 %Prow=ones(1,100);
 %Prow=[0,0,.5*eps,eps,1-3*eps,eps,.5*eps];
-Prow=[0,0,0,0,eps,1-2*eps,eps];
+Prow=[0,0,0,0,eps,1-eps];
 %Prow=[eps,eps,eps,eps,eps,1-8*eps,eps,eps,eps,eps,eps];
 lp=length(Prow);
 Prow=Prow/sum(Prow);
@@ -78,25 +78,25 @@ Z0=start*ones(nbar,1);%Initial immunity
 %Z0=zeros(nbar,1)+start*rand(nbar,1);
 %%
 zn=zeros(nbar,1);
-for t=1:lt
+for tau=1:lt
     if solvetype==1%FSC
     %IC=.5+.1*rand(nbar,1);
-    IC=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,D,Z0,beta,t0,tend,zn,phi1,phi2,seed,t,2); IC=IC./NN0;
+    IC=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,D,Z0,beta,t0,tend,zn,phi1,phi2,seed,tau,2); IC=IC./NN0;
     if agemix~=1
         IC=IC+.2*(1+rand(nbar,1)).*(1-IC);
     end
-    other(t)=IC(1);
+    other(tau)=IC(1);
     options=optimset('Display','off');
     funt=@(Zi)solveZi(Zi,Z0,beta,gamma,D,Nages,addbit);
     Zsol=fsolve(funt,IC,options);
     %
     else%solvetype=2/3
-    Zsol=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,D,Z0,beta,t0,tend,zn,phi1,phi2,seed,t,solvetype);
+    Zsol=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,D,Z0,beta,t0,tend,zn,phi1,phi2,seed,tau,solvetype);
     Zsol=Zsol./NN0;
     end
     nu=Zsol-Z0;
-    A1(:,t)=sum(reshape(Zsol,1,nbar),2);%Prop immune for spatial cell (before antigenic drift)
-    A2(:,t)=sum(reshape(nu,1,nbar),2);%AR for spatial cell
+    A1(:,tau)=sum(reshape(Zsol,1,nbar),2);%Prop immune for spatial cell (before antigenic drift)
+    A2(:,tau)=sum(reshape(nu,1,nbar),2);%AR for spatial cell
     %Assign immunity:
     Bhat=[B(:,2:end),zeros(nbar,1)];
     B=Bhat+repmat(nu,1,lp).*Pmat;
@@ -139,8 +139,8 @@ n=length(NN);
 fs=15;
 hold on
 plot(tout,yout(:,1),'-','linewidth',2,'color',[0,.7,0])
-plot(tout,yout(:,nbar+1),'-','linewidth',2,'color',[.7,0,0;])
-plot(tout,yout(:,2*nbar+1),'k-','linewidth',2)
+plot(tout,yout(:,2),'-','linewidth',2,'color',[.7,0,0;])
+plot(tout,yout(:,3),'k-','linewidth',2)
 xlabel('Time (days)','FontSize',fs);
 ylabel('Population','FontSize',fs);
 set(gca,'FontSize',fs);

@@ -1,4 +1,4 @@
-function [gamma,NN,n,nbar,na,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,ages0]=prepFlu(lscan,R0,stoch)%,U)
+function [gamma,NN,n,nbar,na,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,ages0]=prepFluAge(D1,D2,D3,D4,R0,stoch,celldist)%,U)
 %stoch=1 for SCM(/ABM)
 %Parameters:
 aa=.58;
@@ -11,7 +11,7 @@ p=2.72;
 pR=2.84;
 pU=2.7;
 gamma=1/2.6;
-celldist=.2;
+%celldist=1;%km
 a1immobile=0;
 %
 Cnum=[6.92,.25,.77,.45;.19,3.51,.57,.2;.42,.38,1.4,.17;.36,.44,1.03,1.83];
@@ -20,16 +20,13 @@ C=Cnum.*Cdur;
 %C=[6,.5;1,.5];%Steven's paper
 Ca=C; Cb=C;
 %Comment in to turn age off:
-%Ca=ones(4); Cb=ones(4); C=Ca.*Cb;
+%Ca=ones(4); Cb=ones(4);
 %If plotting curves, can trimbyk before finding max/min **1**
 %
 na=length(C);
-a1=5;%1st age group - up to and including
-a2=19;
-a3=64;
 %
 %Population density:
-[l1,l2]=size(lscan);
+[l1,l2]=size(D1);
 n=l1*l2;
 nbar=n*na;
 %beta_i in here (code at bottom)
@@ -48,26 +45,20 @@ y=(y1-y2).^2;
 r=sqrt(x+y)*celldist;
 %%
 %
-NN=lscan;
-NN=reshape(NN,n,1);
+NN1=reshape(D1,n,1); NN2=reshape(D2,n,1); NN3=reshape(D3,n,1); NN4=reshape(D4,n,1);
+NN=sum([NN1,NN2,NN3,NN4],2);
 NN=ceil(NN);
 NN(NN<0)=NaN;
 NN(isnan(NN)==1)=0;
 %}
-%NN=reshape(NNbar,n,4); NN=sum(NN,2);
-%
-%[maxN,cen]=max(NN);
-%maxN=maxN(1);
-%cen=cen(1);
 %%
 %Age:
 %
-v=[5,14,45,16]/80;
-NNbar=[NN*v(1);NN*v(2);NN*v(3);NN*v(4)];
+NNbar=[NN1;NN2;NN3;NN4];
 if stoch==1
     NNbar=round(NNbar);
 end
-%NN=reshape(NNbar,n,4); NN=sum(NN,2);%Added********
+NN=reshape(NNbar,n,4); NN=sum(NN,2);%Added********
 %NNbar=[.2*NN;.8*NN];
 NNrep=repmat(NN,na,1);
 Sstart=repmat(NNbar,1,nbar);
@@ -79,12 +70,11 @@ CC=[NN,cumsum(ones(n,1))];
 CC(CC(:,1)==0,:)=[];
 CC=sortrows(CC,1);
 CC=flipud(CC);
-%cen=CC(1,2);%1st arg-th most populous
 minNind=CC(end,2);
 maxNind=CC(1,2);
 maxN=CC(1,1);
 %Redundant if input NNbar:
-ages=sparse(n,maxN);
+ages=0;%sparse(n,maxN);
 %
 %No Urban/rural distinction:
 %
@@ -94,14 +84,14 @@ Njalpha=repmat(Nalpha,n,1);
 Nione=repmat(NN,1,n);
 K=K.*Njalpha.*Nione;
 %}
-%{
+%
 %Truscott:
 K=1./(1+(r./13.5).^3.9)+.3*eye(n);
 Nalpha=NN'.^.95;
 Njalpha=repmat(Nalpha,n,1);
 K=K.*Njalpha;
 %}
-
+%
 sumK=sum(K,2);
 repK=repmat(sumK,1,n);
 repK(repK==0)=1;
@@ -120,14 +110,14 @@ K1=kron(eye(na),K);
 if a1immobile==1
     Kbar(1:n,1:n)=eye(n); K1(1:n,1:n)=eye(n);
 end
-%NGM with age only:
-%
+%NGM with age only - for I-mobility with approximation:
+%{
 Ntot=sum(NN);
 Asum=reshape(NNbar,n,na); Asum=sum(Asum,1);
 X=repmat(Asum',1,na).*C/Ntot/gamma;
 d=eigs(X,1); R0a=max(d); betaS=R0/R0a; betaD=betaS; betaI=betaS;
 %}
-%{
+%
 Mj=Kbar'*NNbar;
 Mj(Mj==0)=1;
 Mjover=1./Mj;
@@ -148,23 +138,3 @@ d=eigs(GD,1); R0a=max(d); betaD=R0/R0a;
 %}
 ages0=ages;
 end
-%%
-%beta_i:
-%{
-r=rand(n,1);
-epsilon=.1; betai=(1-epsilon/2+epsilon*r); betai=repmat(betai,1,n);
-%}
-%ABM ages:
-%{
-amax=80;
-for i=1:n
-    Ni=NN(i);
-    ages(i,1:Ni)=ceil((amax)*rand(1,Ni));
-end
-age1=sum(ages<=a1,2);
-age2=sum(ages<=a2,2)-age1;
-age3=sum(ages<=a3,2)-age1-age2;
-age1=age1-sum(ages==0,2);
-age4=NN-age1-age2-age3;
-NNbar=[age1;age2;age3;age4];
-%}

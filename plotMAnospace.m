@@ -1,16 +1,33 @@
-function f=plotMAnospace(A,Acum,NN)
-fs=15;%30;%Font size
+function f=plotMAnospace(A,Acum,NN,ar)
+fs=15; lw=2;%30;%Font size
 tauend=size(A,2);
 %
 figure
 T=1:tauend;
 hold on
-plot(T,Acum,'o-','linewidth',1.5,'color','k')
-plot(T,A,'o:','linewidth',1.5,'color','k')
+if ar==1
+    plot(T,Acum,'-','linewidth',lw)%,'color','k')%'o-'
+else
+    plot(T,A,'-','linewidth',lw)%,'color','k')%'o:'
+end
+
 xlabel('Time (years)','FontSize',fs)
-ylabel('Proportion immune','FontSize',fs)
+%ylabel('Proportion immune','FontSize',fs)
+if ar==1
+    ylabel('Prop. newly recovered','FontSize',fs)
+else
+    ylabel('Prop. susceptible','FontSize',fs)
+end
 set(gca,'FontSize',fs);
-maxY=max(max([Acum;A])); maxY=min(maxY+.1,1);
-axis([1,tauend,0,maxY])
+%maxY=max(max([Acum;A])); maxY=min(maxY+.1,1);
+axis ([0,tauend,0,1]);%maxY])
+
+if ar==1
+    legend('R^1','R^2')
+	
+else
+    legend('S_{11}','S_{10}','S_{01}','S_{00}')
+end
 grid on
+grid minor
 hold off

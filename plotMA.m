@@ -1,8 +1,7 @@
 function f=plotMA(A,Acum,NN)
 fs=15;%Font size: 30 for large
 tauend=size(A,2);
-newend=min(tauend,800);
-newstart=201;
+newend=min(tauend,500);
 cell=6;
 Ni=repmat(NN,1,tauend);
 B=sum(Acum.*Ni,1)/sum(NN);
@@ -27,41 +26,38 @@ Nsort=sortrows(NN); [maxN,cellm]=max(Nsort);
 figure
 %hold on
 logN=log10(Nsort); logN(Nsort==0)=0;
-%cmap=othercolor('BrBG8');
 cmap=colormap(parula);
 %cmap=.9*cmap;
 colormap(cmap)
-%imagesc(logN);
 cc=colormap;
+%imagesc(logN);
 %cc=flipud(colormap);
 lc=size(cc,1);
 if n>1
     Gs=round(interp1(linspace(min(logN(:)),max(logN(:)),lc),1:lc,logN));
     CC=reshape(cc(Gs,:),[size(Gs) 3]);%Make RGB image from scaled
-    %hold off
     %
     %thismany=20; sam=randsample(1:n,thismany);
-    nn=2;
     %sam=(600+rem(n,50):50:n); thismany=length(sam);
-    sam=(nn+rem(n,nn):nn:n); thismany=length(sam);
+    nn=100;
+    sam=(rem(n,nn):nn:n); thismany=length(sam);%nn+
     y1=Acum(sam,:); y2=A(sam,:); cc=CC(sam,:);
-    %figure
 else
     y1=Acum; y2=A; thismany=1; cc=[.447,.553,.647];
 end
-
-y1=y1(:,newstart:newend); y2=y2(:,newstart:newend);
-T=(newstart:newend);
+%
+y1=y1(:,1:newend); y2=y2(:,1:newend);
+T=1:newend;
 hold on
 for i=1:thismany%Yes, this loop is clonky
-    plot(T,y1(i,:),'o-','linewidth',1.5,'color',[.5,.5,.5])%cc(i,:));
-    plot(T,y2(i,:),'o-','linewidth',1.5,'color',[0,0,0])%cc(i,:));
+    %plot(T,y1(i,:),'o-','linewidth',1.5,'color',cc(i,:));%[.5,.5,.5])%cc(i,:));
+    plot(T,y2(i,:),'o-','linewidth',1.5,'color',cc(i,:));%[0,0,0])%cc(i,:));
 end
 xlabel('Time (years)','FontSize',fs)
-ylabel('Proportion immune','FontSize',fs)
+ylabel('Relative attack')%('Proportion immune','FontSize',fs)
 set(gca,'FontSize',fs);
 maxY=max(max([y1;y2])); maxY=min(maxY+.1,1);%+.1
-axis([newstart-1,newend,0,maxY])
+axis tight%([1,newend,0,maxY])
 grid on
 if n>1
     colorbar
@@ -71,7 +67,7 @@ hold off
 %}
 %{
 figure
-colormap=cmap;
+%colormap=cmap;
 hold on
 h1=plot(1:tauend,Acum,'-o','linewidth',2,'markerfacecolor','auto');
 h2=plot(1:tauend,A,':o','linewidth',2,'markerfacecolor','auto');
