@@ -120,35 +120,25 @@ if solvetype==2
 %Incidence curve in here:
 %
 figure
+%fs=15; lw=2
 fs=12; lw=2;
 Y=yout(:,nbar+1:2*nbar); %Z=yout(:,2*nbar+1:3*nbar);
 %Y=sum(Y,2);
-%Y1=Y(:,minNind)+Y(:,minNind+n)+Y(:,minNind+2*n)+Y(:,minNind+3*n); Y1=Y1/NN(minNind);
-%Y2=Y(:,maxNind)+Y(:,maxNind+n)+Y(:,maxNind+2*n)+Y(:,maxNind+3*n); Y2=Y2/NN(maxNind);
-Ysum=sum(Y,2);
+Y1=Y(:,minNind)+Y(:,minNind+n)+Y(:,minNind+2*n)+Y(:,minNind+3*n); Y1=Y1/NN(minNind);
+Y2=Y(:,maxNind)+Y(:,maxNind+n)+Y(:,maxNind+2*n)+Y(:,maxNind+3*n); Y2=Y2/NN(maxNind);
 Yall=Y(:,1:n)+Y(:,n+1:2*n)+Y(:,2*n+1:3*n)+Y(:,3*n+1:end);
 Yall=abs(Yall);%****cheat ;)
-%{
-%Unlogged plots:
 hold on
-%plot(tout,Y1,'--','linewidth',lw,'color',[.165,.31,.431]);%[.165,.31,.431][.447,.553,.647]
-%plot(tout,Y2,'-','linewidth',lw,'color',[.165,.31,.431]);
-plot(tout,Ysum,'k','linewidth',lw);
-plot(tout,Yall);
-%}
-%
-%Logged plots:
-semilogy(tout,Ysum,'k','linewidth',lw);
-hold on
-semilogy(tout,Yall);
-%}
+%plot(tout,log10(Y1),'--','linewidth',lw,'color',[.165,.31,.431]);%[.165,.31,.431][.447,.553,.647]
+%plot(tout,log10(Y2),'-','linewidth',lw,'color',[.165,.31,.431]);
+plot(tout,log10(Yall));
 xlabel('Time (days)','FontSize',fs);
-ylabel('Prevalence','FontSize',fs);
+ylabel('log Prevalence','FontSize',fs);
 set(gca,'FontSize',fs);
-maxY=max(Ysum);
+maxY=max(max([Y1;Y2]));
 %axis([0,tend,0,maxY])
-axis ([0,100,0,maxY])
-%legend('Min','Max','location','NE')
+axis([0,360,-5,log10(max(max(Yall)))])
+legend('Min','Max','location','NE')
 grid on
 grid minor
 hold off
@@ -217,22 +207,15 @@ end
 Vsum=sum(Vec,1);%/sum(NN);
 maxV=max(Vsum);
 fs=12; lw=2;
-Vtot=Vsum(factor:factor:end);
-Vall=Vec(1:n,factor:factor:end)+Vec(n+1:2*n,factor:factor:end)+Vec(2*n+1:3*n,factor:factor:end)+Vec(3*n+1:end,factor:factor:end);
+VV=Vsum(factor:factor:end);
+logVV=log10(VV);
+Vall=Vec(:,factor:factor:end);
+logVall=log10(Vall);
 figure
-%{
-%Unlogged plots:
-plot(1:tend/factor,Vtot,'-','linewidth',2,'color',[.447,.553,.647]);
-plot(1:tend/factor,Vall);
-%}
-%
-%Logged plots:
-semilogy(1:tend/factor,Vtot,'k','linewidth',lw)
-hold on
-semilogy(1:tend/factor,Vall);
-%}
-axis([0,tend/factor,0,maxV]);
-xlabel('Time (days)'); ylabel('Prevalence'); set(gca,'fontsize',fs)
+%plot(1:tend/factor,logV,'-','linewidth',2,'color',[.447,.553,.647]);
+plot(1:tend/factor,logVall);
+%axis([0,tend/factor,0,maxV]); 
+xlabel('Time (days)'); ylabel('log Prevalence'); set(gca,'fontsize',15)
 grid on
 grid minor
 %}
@@ -242,38 +225,3 @@ if sum(isnan(R))>0
     print('Somenting is NaN')
 end
 end
-
-%%
-
-%Incidence curve:
-%{
-if tau==10
-figure
-fs=15;
-Y=yout(:,nbar+1:2*nbar);
-Y=Y(:,1:n)+Y(:,n+1:2*n)+Y(:,2*n+1:3*n)+Y(:,3*n+1:end);
-Nover=1./NN; Nover(NN==0)=0; Y=Y.*repmat(Nover',length(tout),1);
-X=[NN,Y']; X=sortrows(X,1); Nsort=X(:,1); X=X(:,2:end); X=X';
-hold on
-k=100; nk=floor(n/k);
-cmap=parula(nk);
-colormap(cmap);
-for i=1:nk
-    plot(tout,X(:,i*100),'-','linewidth',2,'color',cmap(i,:));
-end
-xlabel('Time (days)','FontSize',fs);
-ylabel('Infectives','FontSize',fs);
-set(gca,'FontSize',fs);
-axis([0,tend,0,max(max(X))])
-end
-
-figure
-fs=15;
-Y=yout(:,nbar+1:2*nbar);
-Y=sum(Y,2);
-plot(tout,Y,'-','linewidth',2,'color',[.447,.553,.647]);
-xlabel('Time (days)','FontSize',fs);
-ylabel('Infectives','FontSize',fs);
-set(gca,'FontSize',fs);
-axis([0,tend,0,max(Y)])
-%}
