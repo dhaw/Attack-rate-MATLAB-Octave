@@ -1,13 +1,13 @@
 function [f,g]=MA1D2sub(eps,cross)
 %Parameters:
 %eps=.5;
-%reduction=.61915634;
+%reduction=.61915634;=1-cross?
 %solvetype: ODE only
 R0=1.8; gamma=1/2.6;
 NN=1; n=length(NN);
 demog=1;%Ageing: 1=on
 amax=80;
-tauend=10;
+tauend=50;
 plotTau=0;
 time=(1:tauend);
 lt=length(time);
@@ -18,6 +18,7 @@ phi1=1; phi2=0;
 numseed=10^(-8); seed=numseed;%*NNprob;
 %
 %Theta:
+%Prow1=[0,0,0,0,eps,1-eps];
 Prow1=[0,0,0,0,.5,.5];
 %Prow1=[0,.1*ones(1,10)];
 lp1=length(Prow1);
@@ -117,8 +118,8 @@ end
     %Age the populations:
     if demog==1
         rem=A1t(2:4)*amod;
-        A1t=A1t+[sum(rem);-rem];
         b1=b1*(1-amod); b2=b2*(1-amod);
+        A1t=A1t+[sum(rem);-rem];
     end
     %Update S0 and Shat:
     S0=A1t(1:3);%*NN;%Assume duration of immunity unrelated to cross infection
@@ -127,15 +128,8 @@ end
     %Need to comment out "A1(:,t)=..." above
     A1(:,tau)=[S0;NN-sum(S0)];
 end
-
 f=A1;
 g=A2;
-
-%%
-
-fs=15; lw=3; ms=3;
-%figure
-
 end
 
 %%
@@ -143,7 +137,7 @@ end
 function f=integr8all(t,y,beta,gamma,A,B,NN,seed,phi1,phi2,tau,seeddot,cross)
 mu=1/1800;%5*360=1800
 phi=1;%phi1-phi2*cos(pi*t/180);
-S=y(1:3).*[1;cross;cross];%Like a modified beta
+S=y(1:3).*[1;1-cross;1-cross];%Like a modified beta
 Shat=[S(1);S];
 I=y(4:7);%XXXX
 seedf=seed*S./NN*exp(-t).*seeddot;

@@ -1,10 +1,10 @@
-function [gamma,NN,n,nbar,na,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,ages0]=prepFlu(lscan,R0,stoch)%,U)
+function [gamma,NN,n,nbar,na,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,ages0]=XprepFlu(lscan,R0,stoch,param)%,U)
 %stoch=1 for SCM(/ABM)
 %Parameters:
 aa=.58;
 aaR=.91;
 aaU=0;
-alpha=.52;
+alpha=param;%.52;
 alphaR=.56;
 alphaU=.4;
 p=2.72;
@@ -73,7 +73,6 @@ v=[5,14,45,16]/80;
 NNbar=[NN*v(1);NN*v(2);NN*v(3);NN*v(4)];
 if stoch==1
     NNbar=round(NNbar);
-    NN=sum(reshape(NNbar,n,na),2);
 end
 %NN=reshape(NNbar,n,4); NN=sum(NN,2);%Added********
 %NNbar=[.2*NN;.8*NN];

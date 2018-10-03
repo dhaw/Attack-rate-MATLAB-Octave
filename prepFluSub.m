@@ -1,4 +1,5 @@
-function [gamma,NN,n,nbar,na,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,ages0]=prepFlu(lscan,R0,stoch)%,U)
+function [gamma,NN,n,nbar,na,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,ages0]=prepFluSub(lscan,R0,stoch,cellSet)%,U)
+%For a subset of cells in a rectangular grid: cellSet=1 where keep
 %stoch=1 for SCM(/ABM)
 %Parameters:
 aa=.58;
@@ -66,6 +67,14 @@ NN(isnan(NN)==1)=0;
 %[maxN,cen]=max(NN);
 %maxN=maxN(1);
 %cen=cen(1);
+%%
+%Extrace subset here:
+inds=reshape(cellSet,l1*l2,1);
+inds=find(inds==1);
+NN=NN(inds);
+r=r(inds,inds);
+n=length(NN);
+nbar=n*na;
 %%
 %Age:
 %

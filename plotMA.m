@@ -40,7 +40,11 @@ if n>1
     %thismany=20; sam=randsample(1:n,thismany);
     %sam=(600+rem(n,50):50:n); thismany=length(sam);
     nn=100;
-    sam=(rem(n,nn):nn:n); thismany=length(sam);%nn+
+    bottom=rem(n,nn);
+    if bottom==0
+        bottom=1;
+    end
+    sam=(bottom:nn:n); thismany=length(sam);%nn+
     y1=Acum(sam,:); y2=A(sam,:); cc=CC(sam,:);
 else
     y1=Acum; y2=A; thismany=1; cc=[.447,.553,.647];
@@ -54,11 +58,12 @@ for i=1:thismany%Yes, this loop is clonky
     plot(T,y2(i,:),'o-','linewidth',1.5,'color',cc(i,:));%[0,0,0])%cc(i,:));
 end
 xlabel('Time (years)','FontSize',fs)
-ylabel('Relative attack')%('Proportion immune','FontSize',fs)
+ylabel('Attack rate')%('Proportion immune','FontSize',fs) Relative attack
 set(gca,'FontSize',fs);
 maxY=max(max([y1;y2])); maxY=min(maxY+.1,1);%+.1
-axis tight%([1,newend,0,maxY])
+axis([1,newend,0,maxY])
 grid on
+grid minor
 if n>1
     colorbar
     caxis([0,max(logN)])

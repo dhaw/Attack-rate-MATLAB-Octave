@@ -2,7 +2,7 @@ function [f,g]=MA2subSpace(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,maxN,K
 %Parameters:
 R0=1.8;%XXXX Feed in
 eps=0;
-reduction=1;%.61915634;%Reduction FACTOR: reduction=1 mans no cross immunity
+reduction=.1;%.61915634;%Reduction FACTOR: reduction=1 means no cross immunity ********opposite!
 if isdual==0%heterogeneity
     beta=betaS;
 elseif isdual==1
@@ -14,11 +14,13 @@ end
 %solvetype: ODE only
 demog=1;%Ageing: 1=on
 amax=80;
-tauend=20;
+tauend=13;
+plotTau=0;%Plot curve for this year: plotTau<1 for no plot
 time=(1:tauend);
 lt=length(time);
 t0=0; tend=360;
 mu=0;
+S0=[1;0;0];
 %
 phi1=1; phi2=0;
 numseed=10^(-8); seed=numseed;
@@ -58,7 +60,7 @@ A=kron(A4,D);%.*repD; is repD necessary here? Also, got dimension mismatch error
 B=kron(B4,D);%.*repD;
 %h}
 %Z0=zeros(3,1);%Initial condition of immunity
-S0=[1;0;0];
+%S0=[1;0;0];
 S0=kron(S0,NNbar)/sum(S0);%Number sus to each distinct set of subtypes %h: bar
 Shat=[S0(1:nbar);S0];%This is Shat(0)
 zn=zeros(length(Shat),1);
@@ -70,12 +72,18 @@ A2=zeros(2*nbar,lt); A2(:,1)=zeros(2*nbar,1);
 b1=repmat(S0(nbar+1:2*nbar),1,lp1).*[repmat(Prow1(:,2:end),nbar,1),znbar];
 b2=repmat(S0(2*nbar+1:3*nbar),1,lp2).*[repmat(Prow2(:,2:end),nbar,1),znbar];%h
 
+%Check method/S0 definition above - *Prow if IMMUNE
+b1=zeros(nbar,lp1);
+b2=zeros(nbar,lp2); %z1nbar=ones(nbar,1);
+b2(:,2)=ones(nbar,1);%,.3*z1nbar,.1*z1nbar];
+
 amod=1/amax;%(amax-1)/amax;
 options=odeset('refine',1);
 %xoverFcn=@(t,y)evZero(t,y,nbar); 
 %options=odeset(options,'Events',xoverFcn);
 thresh=1-1/R0;
 cross=1-reduction;
+NNrep(NNrep==0)=1;%********26/9/18
 NNrep3=repmat(NNrep,3,1); NNrep4=[NNrep3;NNrep];
 for tau=1:lt
 %Only seed if below herd immunity threshold - otherwise integrators are
@@ -91,7 +99,7 @@ seeddot=1;
 y0=[S0;zn;zn];%XXXX
 [tout,yout]=ode45(@(t,y)integr8all(t,y,beta,gamma,nbar,A,B,NN,NNrep3,NNrep4,seed,phi1,phi2,tau,seeddot,cross),[t0,tend],y0,options);
 %
-if tau==7
+if tau==plotTau
     fs=15; lw=2;
     figure
     Y=yout(:,3*nbar+1:7*nbar); %Z=yout(:,2*nbar+1:3*nbar);%XXXX
@@ -132,7 +140,7 @@ end
     w2=b2(:,1); b2=[b2(:,2:end),znbar];
     %%
     %A1t1=A1t(1:nbar); 
-    A1t2=Rt(nbar+1:2*nbar); A1t3=Rt(2*nbar+1:3*nbar); A1t4=Rt(3*nbar+1:end);
+    A1t2=A1t(nbar+1:2*nbar); A1t3=A1t(2*nbar+1:3*nbar); A1t4=A1t(3*nbar+1:end);
     A1t34div=A1t3+A1t4; A1t34div(A1t34div==0)=1;%XXXX Added
     A1t24div=A1t2+A1t4; A1t24div(A1t24div==0)=1;%XXXX Added
     %Waning - new method - get negative S_00:

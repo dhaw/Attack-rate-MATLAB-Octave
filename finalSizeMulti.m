@@ -2,7 +2,8 @@ function [f,g]=finalSizeMulti(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,max
 %ZfinalSizeAllMulti2
 %isdual: 0=SM, 1=DM, 2=IM
 %solvetype: 1=FSC, 2=ODE, 3=SCM
-tauend=1;
+tauend=100;
+plotTau=0;
 time=(1:tauend);
 lt=length(time);
 mu=0;%In ODE code
@@ -14,10 +15,10 @@ R0=1.8;%Only here for "thresh" later on - make input?********
 alpha=1;
 %
 %Theta:
-eps=.05;
+eps=.1;
 %Prow=poisspdf((0:10),5);
 %Prow=binopdf((0:10),45,1/10);
-Prow=[0,0,0,0,eps,1-eps];%Chaotic?
+Prow=[0,0,0,eps,1-eps];%Chaotic?
 %Prow=[0,0,0,eps,1-2*eps,eps];
 %Prow=[0,0,0,0,0,eps,1-2*eps,eps];
 %Prow=1/11*ones(1,11);
@@ -25,8 +26,10 @@ Prow=[0,0,0,0,eps,1-eps];%Chaotic?
 lp=length(Prow);
 Prow=Prow/sum(Prow);
 Pmat=repmat(Prow,nbar,1);
-v=[5,14,45,16]; vover=1./v; V=kron(vover',ones(n,1)); V=repmat(V,1,lp);
-w=[0,5,14,45]; woverv=w.*vover; W=kron(woverv',ones(n,1)); W=repmat(W,1,lp);
+%v=[5,14,45,16]; vover=1./v; V=kron(vover',ones(n,1)); V=repmat(V,1,lp);
+%w=[0,5,14,45]; woverv=w.*vover; W=kron(woverv',ones(n,1)); W=repmat(W,1,lp);
+vover=[1/5,1/14,1/45,0];
+V=kron(vover',ones(n,1)); V=repmat(V,1,lp);
 %
 cen=0; ages0=0; %maxN=0;
 A1=zeros(n,lt);
@@ -63,7 +66,7 @@ phi1=1; phi2=0;
 %NNprob=NNbar/sum(NN);
 %NNprob=ones(nbar,1)/sum(NNbar);
 seed=numseed;%*NNprob;
-seedvec=zeros(nbar,1); seedvec(2*n+1)=seed;
+seedvec=zeros(nbar,1); seedvec(2*n+1:3*n)=seed*ones(n,1);
 
 thresh=1-1/R0;
 
@@ -78,7 +81,7 @@ for t=1:lt
     Zsol=fsolve(funt,IC,options);
     %
     else%solvetype=2/3
-    Zsol=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,Z0,beta,ages0,t,t0,tend,zn,phi1,phi2,seed,solvetype,thresh,alpha,seedvec);
+    Zsol=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,Z0,beta,ages0,t,t0,tend,zn,phi1,phi2,seed,solvetype,thresh,alpha,seedvec,plotTau);
     Zsol=Zsol./NN0;
     end
     nu=Zsol-Z0;
@@ -89,10 +92,14 @@ for t=1:lt
     Bhat=[B(:,2:end),zeros(nbar,1)];
     B=Bhat+repmat(nu,1,lp).*Pmat;
     %Age the populations:
-    %
+    %{
     BVtake=B.*V; Bsus=sum(BVtake(1:n,2:end),2);
     BVadd=[zeros(n,lp);BVtake(1:3*n,:)].*W;
     B=B-BVtake+BVadd; B(1:n,1)=B(1:n,1)+Bsus;
+    %}
+    Btake=B.*V; Badd=circshift(Btake,n,1);
+    B(end-n+1:end,:)=B(end-n+1:end,:)*15/16;
+    B=B-Btake+Badd;
     %}
     Z0=sum(B(:,2:end),2)*(1-mu);
 end
@@ -107,7 +114,7 @@ lZi=log(Nages-Zi); lZi(Zi>1)=NaN;
 f=lZi-log(Nages-Z0)+beta/gamma*D*(Zi-Z0)+addbit;
 end
 %%
-function f=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,ic,beta,ages0,tau,t0,tend,zn,phi1,phi2,seed,solvetype,thresh,alpha,seedvec)
+function f=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,ic,beta,ages0,tau,t0,tend,zn,phi1,phi2,seed,solvetype,thresh,alpha,seedvec,plotTau)
 icR=ic.*NNrep;
 y0=[NNbar-icR;zn;icR];
 cond=sum(icR<thresh);
@@ -119,6 +126,7 @@ if solvetype==2
 [tout,yout]=ode45(@(t,y)integr8all(t,y,beta,gamma,n,nbar,NN,NN0,D,seed,phi1,phi2,alpha,seedvec),[t0,tend],y0);
 %Incidence curve in here:
 %
+if tau==plotTau
 figure
 fs=12; lw=2;
 Y=yout(:,nbar+1:2*nbar); %Z=yout(:,2*nbar+1:3*nbar);
@@ -152,6 +160,7 @@ axis ([0,100,0,maxY])
 grid on
 grid minor
 hold off
+end
 %}
 rec0=yout(end,2*nbar+1:end);%+yout(end,nbar+1:2*nbar);%******** Truncation - add infectious to rercovered?
 f=rec0';
@@ -204,6 +213,7 @@ threshold=30;%Number of time-steps for necessary simulation/seed
 while i<tend && (i<threshold || sum(I)>0)%At least 30 time-steps
 phi=1;%phi1-phi2*cos(pi*i*f1/180);%Just seed here
 Sout=1-exp(-phi*(beta*(D*(I./N0).^alpha)+seed*heaviside(threshold-i)));%+mu*R;.^alpha
+Sout(Sout>1)=1;
 Sout=binornd(S,Sout); Sout(S==0)=0;
 S=S-Sout; I=I+Sout;
 %
@@ -213,24 +223,29 @@ I=I-Iout; R=R+Iout;
 Vec(:,i)=I;
 i=i+1;
 end
-%
+%{
 Vsum=sum(Vec,1);%/sum(NN);
 maxV=max(Vsum);
 fs=12; lw=2;
 Vtot=Vsum(factor:factor:end);
 Vall=Vec(1:n,factor:factor:end)+Vec(n+1:2*n,factor:factor:end)+Vec(2*n+1:3*n,factor:factor:end)+Vec(3*n+1:end,factor:factor:end);
-figure
-%{
+%
 %Unlogged plots:
+figure
 plot(1:tend/factor,Vtot,'-','linewidth',2,'color',[.447,.553,.647]);
 plot(1:tend/factor,Vall);
+axis([0,tend/factor,0,maxV]);
+xlabel('Time (days)'); ylabel('Prevalence'); set(gca,'fontsize',fs)
+grid on
+grid minor
 %}
 %
+%{
 %Logged plots:
+figure
 semilogy(1:tend/factor,Vtot,'k','linewidth',lw)
 hold on
 semilogy(1:tend/factor,Vall);
-%}
 axis([0,tend/factor,0,maxV]);
 xlabel('Time (days)'); ylabel('Prevalence'); set(gca,'fontsize',fs)
 grid on

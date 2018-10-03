@@ -13,6 +13,7 @@ pU=2.7;
 gamma=1/2.6;
 celldist=.2;%km
 a1immobile=1;
+normaliseKernel=1
 %{
 Cnum=[6.92,.25,.77,.45;.19,3.51,.57,.2;.42,.38,1.4,.17;.36,.44,1.03,1.83];
 Cdur=[3.88,.28,1.04,.49;.53,2.51,.75,.5;1.31,.8,1.14,.47;1,.85,.88,1.73];
@@ -99,7 +100,9 @@ K=K.*Njalpha;
 sumK=sum(K,2);
 repK=repmat(sumK,1,n);
 repK(repK==0)=1;
-K=K./repK;
+if normaliseKernel==1
+    K=K./repK;
+end
 %}
 %
 %Expand K and C:
