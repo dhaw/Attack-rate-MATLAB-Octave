@@ -1,4 +1,4 @@
-function [f,g]=finalSizeMulti2sub(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,isdual)
+function [f,g]=finalSizeMulti2subAge(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,isdual)
 %This is an upgrade on "MA2subSpace(Debug)"
 %Parameters:
 %solvetype: ODE only
@@ -172,6 +172,10 @@ end
         SageTake=S0.*Stake123; SageAdd=circshift(SageTake,n);
         Sdeath=S0.*Stake4; Sbirth=reshape(Sdeath,n,3*na); Sbirth=sum(Sbirth,2);
         S0=S0-SageTake+SageAdd-Sdeath; S0(1:n)=S0(1:n)+Sbirth+S0rest(end-n+1:end)/16;
+        %Redefine NNbar and NN accordingly:
+        %
+        %Recompute K:
+        %
     end
     A1(:,tau)=S0;
 end

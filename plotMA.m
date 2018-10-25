@@ -1,5 +1,7 @@
 function f=plotMA(A,Acum,NN)
+cbaroff=1;
 fs=15;%Font size: 30 for large
+lw=2;%1.5
 tauend=size(A,2);
 newend=min(tauend,500);
 cell=6;
@@ -26,7 +28,7 @@ Nsort=sortrows(NN); [maxN,cellm]=max(Nsort);
 figure
 %hold on
 logN=log10(Nsort); logN(Nsort==0)=0;
-cmap=colormap(parula);
+cmap=colormap(lines);
 %cmap=.9*cmap;
 colormap(cmap)
 cc=colormap;
@@ -39,7 +41,7 @@ if n>1
     %
     %thismany=20; sam=randsample(1:n,thismany);
     %sam=(600+rem(n,50):50:n); thismany=length(sam);
-    nn=100;
+    nn=10;
     bottom=rem(n,nn);
     if bottom==0
         bottom=1;
@@ -54,8 +56,8 @@ y1=y1(:,1:newend); y2=y2(:,1:newend);
 T=1:newend;
 hold on
 for i=1:thismany%Yes, this loop is clonky
-    %plot(T,y1(i,:),'o-','linewidth',1.5,'color',cc(i,:));%[.5,.5,.5])%cc(i,:));
-    plot(T,y2(i,:),'o-','linewidth',1.5,'color',cc(i,:));%[0,0,0])%cc(i,:));
+    plot(T,y1(i,:),':','linewidth',lw,'color',cc(i,:));%[.5,.5,.5])%cc(i,:)); 'o-'
+    plot(T,y2(i,:),'-','linewidth',lw,'color',cc(i,:));%[0,0,0])%cc(i,:)); 'o-'
 end
 xlabel('Time (years)','FontSize',fs)
 ylabel('Attack rate')%('Proportion immune','FontSize',fs) Relative attack
@@ -64,7 +66,7 @@ maxY=max(max([y1;y2])); maxY=min(maxY+.1,1);%+.1
 axis([1,newend,0,maxY])
 grid on
 grid minor
-if n>1
+if n>1 && cbaroff~=1
     colorbar
     caxis([0,max(logN)])
 end

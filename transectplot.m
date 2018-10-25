@@ -27,7 +27,7 @@ minx=min(x); maxx=max(x); miny=min(y); maxy=max(y);
 %Z(Z<0)=NaN;
 Z=Z(minx:maxx+4,miny-4:maxy+4);
 ZZ=ZZ(minx:maxx+4,miny-4:maxy+4);
-minxaxis=min(locs(:,2);
+minxaxis=min(locs(:,2));
 
 Z2=lscan(minx:maxx+4,miny-4:maxy+4);
 y=y-miny+5;

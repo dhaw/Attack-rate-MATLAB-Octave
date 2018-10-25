@@ -1,28 +1,29 @@
-function [f,g]=finalSizeMulti(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,beta,isdual,solvetype,numseed)%,NNbar)
+function [f,g]=finalSizeMulti(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,isdual,solvetype,numseed)
 %ZfinalSizeAllMulti2
 %isdual: 0=SM, 1=DM, 2=IM
 %solvetype: 1=FSC, 2=ODE, 3=SCM
-tauend=100;
+eps=.2;
+if isdual==0
+    beta=betaS;
+elseif isdual==1
+    beta=betaD;
+else
+    beta=betaI;
+end
+demog=1;
+tauend=10;
 plotTau=0;
 time=(1:tauend);
 lt=length(time);
+t0=0; tend=3600;
 mu=0;%In ODE code
+phi1=1; phi2=0;
 NN0=NNrep; NN0(NNrep==0)=1;
 Nages=NNbar./NN0;
-t0=0; tend=360;
-%
-R0=1.8;%Only here for "thresh" later on - make input?********
-alpha=1;
+alpha=1;%TSIR/sub-exp parameter
 %
 %Theta:
-eps=.1;
-%Prow=poisspdf((0:10),5);
-%Prow=binopdf((0:10),45,1/10);
-Prow=[0,0,0,eps,1-eps];%Chaotic?
-%Prow=[0,0,0,eps,1-2*eps,eps];
-%Prow=[0,0,0,0,0,eps,1-2*eps,eps];
-%Prow=1/11*ones(1,11);
-%
+Prow=[0,0,0,1-eps,eps];
 lp=length(Prow);
 Prow=Prow/sum(Prow);
 Pmat=repmat(Prow,nbar,1);
@@ -32,9 +33,6 @@ vover=[1/5,1/14,1/45,0];
 V=kron(vover',ones(n,1)); V=repmat(V,1,lp);
 %
 cen=0; ages0=0; %maxN=0;
-A1=zeros(n,lt);
-A2=A1;
-N0=NN; N0(NN==0)=1;
 %
 Ni=repmat(NNrep,1,nbar); Nj=Ni';
 Niover=1./Ni; Niover(Ni==0)=1;
@@ -53,23 +51,16 @@ end
 %%
 %Brand=rand(nbar,1); %Brand=Brand./repmat(sum(Brand,2),1,5);
 B=zeros(nbar,lp);
-%B(:,2)=.1*rand(nbar,1);%Non-trivial IC
-%B(:,2)=.2*Brand;
-%%
-Z0=sum(B(:,2:end),2)*(1-mu);%=0;
-%For final sizes (if IC not in loop):
-%IC=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,maxN,cen,D,Z0,beta,ages0,1); IC=IC./NN0;
-%IC=.5*.2*rand(nbar,1);
+Z0=sum(B(:,2:end),2)*(1-mu);
 %%
 zn=zeros(nbar,1);
-phi1=1; phi2=0;
-%NNprob=NNbar/sum(NN);
-%NNprob=ones(nbar,1)/sum(NNbar);
+A1=zeros(n,lt);
+A2=A1;
+N0=NN; N0(NN==0)=1;
+%NNprob=NNbar/sum(NN); NNprob=ones(nbar,1)/sum(NNbar);
 seed=numseed;%*NNprob;
 seedvec=zeros(nbar,1); seedvec(2*n+1:3*n)=seed*ones(n,1);
-
-thresh=1-1/R0;
-
+thresh=0;%Remove from ODE solver
 for t=1:lt    
     if solvetype==1
     %Final size:
@@ -92,16 +83,17 @@ for t=1:lt
     Bhat=[B(:,2:end),zeros(nbar,1)];
     B=Bhat+repmat(nu,1,lp).*Pmat;
     %Age the populations:
-    %{
-    BVtake=B.*V; Bsus=sum(BVtake(1:n,2:end),2);
-    BVadd=[zeros(n,lp);BVtake(1:3*n,:)].*W;
-    B=B-BVtake+BVadd; B(1:n,1)=B(1:n,1)+Bsus;
-    %}
-    Btake=B.*V; Badd=circshift(Btake,n,1);
-    B(end-n+1:end,:)=B(end-n+1:end,:)*15/16;
-    B=B-Btake+Badd;
-    %}
-    Z0=sum(B(:,2:end),2)*(1-mu);
+    if demog==1
+        %{
+        BVtake=B.*V; Bsus=sum(BVtake(1:n,2:end),2);
+        BVadd=[zeros(n,lp);BVtake(1:3*n,:)].*W;
+        B=B-BVtake+BVadd; B(1:n,1)=B(1:n,1)+Bsus;
+        %}
+        Btake=B.*V; Badd=circshift(Btake,n,1);
+        B(end-n+1:end,:)=B(end-n+1:end,:)*15/16;
+        B=B-Btake+Badd;
+    end
+    Z0=sum(B(:,2:end),2);%*(1-mu);
 end
 %%
 %}
@@ -162,7 +154,7 @@ grid minor
 hold off
 end
 %}
-rec0=yout(end,2*nbar+1:end);%+yout(end,nbar+1:2*nbar);%******** Truncation - add infectious to rercovered?
+rec0=yout(end,2*nbar+1:end)+yout(end,nbar+1:2*nbar);%******** Truncation - add infectious to rercovered?
 f=rec0';
 
 elseif solvetype==3
@@ -183,7 +175,7 @@ I=y(nbar+1:2*nbar);
 R=y(2*nbar+1:end);
 %seed1=seed*S./NN0;%*exp(-t);
 seed1=seedvec.*S./NN0;%*exp(-t);
-Sfoi=phi*(beta*S.*(D*(I./NN0).^alpha).^alpha+seed1);%seed1);
+Sfoi=phi*(beta*S.*(D*(I./NN0))+seed1);%seed1);
 Sdot=-Sfoi;%+mu*R;
 Idot=Sfoi-gamma*I;
 Rdot=gamma*I;%-mu*R;

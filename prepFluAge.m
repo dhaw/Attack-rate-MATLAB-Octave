@@ -11,9 +11,10 @@ p=2.72;
 pR=2.84;
 pU=2.7;
 gamma=1/2.6;
-celldist=.2;%km
-a1immobile=1;
-normaliseKernel=1
+celldist=.8;%km
+a1immobile=0;
+normaliseKernel=1;
+%%
 %{
 Cnum=[6.92,.25,.77,.45;.19,3.51,.57,.2;.42,.38,1.4,.17;.36,.44,1.03,1.83];
 Cdur=[3.88,.28,1.04,.49;.53,2.51,.75,.5;1.31,.8,1.14,.47;1,.85,.88,1.73];
@@ -21,15 +22,15 @@ C=Cnum.*Cdur;
 %}
 %UK (from vaxedemic):
 C=[37.4622640266199,13.2337799407673,9.35866526693108,5.27807222067513;17.2304141889828,98.1983003738366,17.0186152145963,10.1131975048866;9.46784315245156,9.4416088929148,16.22285757548,5.7675253611147;1.38284918679668,1.26680284573205,1.08367881504336,3.88324564380799];
-
-%C=[6,.5;1,.5];%Steven's paper
-Ca=C; Cb=C;
+%C=[6.92,.25,.77,.45;.19,3.51,.57,.2;.42,.38,1.4,.17;.36,.44,1.03,1.83];
+%Steven's paper:
+%C=[6,.5;1,.5];
 %Comment in to turn age off:
-%Ca=ones(4); Cb=ones(4);
+C=ones(4);
+Ca=C; Cb=C;
 %If plotting curves, can trimbyk before finding max/min **1**
-%
 na=length(C);
-%
+%%
 %Population density:
 [l1,l2]=size(D1);
 n=l1*l2;
@@ -49,22 +50,18 @@ x=(x1-x2).^2;
 y=(y1-y2).^2;
 r=sqrt(x+y)*celldist;
 %%
-%
 NN1=reshape(D1,n,1); NN2=reshape(D2,n,1); NN3=reshape(D3,n,1); NN4=reshape(D4,n,1);
 NN=sum([NN1,NN2,NN3,NN4],2);
 NN=ceil(NN);
 NN(NN<0)=NaN;
 NN(isnan(NN)==1)=0;
-%}
 %%
 %Age:
-%
 NNbar=[NN1;NN2;NN3;NN4];
 if stoch==1
     NNbar=round(NNbar);
 end
-NN=reshape(NNbar,n,4); NN=sum(NN,2);%Added********
-%NNbar=[.2*NN;.8*NN];
+NN=sum(reshape(NNbar,n,na),2);
 NNrep=repmat(NN,na,1);
 Sstart=repmat(NNbar,1,nbar);
 SstartFrac=NNbar./NNrep; SstartFrac(NNrep==0)=0; SstartFrac=repmat(SstartFrac,1,nbar);
@@ -82,7 +79,7 @@ maxN=CC(1,1);
 ages=0;%sparse(n,maxN);
 %
 %No Urban/rural distinction:
-%
+%{
 K=1./(1+(r./aa).^(p));
 Nalpha=NN'.^alpha;
 Njalpha=repmat(Nalpha,n,1);

@@ -12,6 +12,7 @@ R1=R1(1:n,:)+R1(n+1:2*n,:)+R1(2*n+1:3*n,:)+R1(3*n+1:end,:);
 R1=R1./repNN; R1(repNN==0)=0;
 R2=R2(1:n,:)+R2(n+1:2*n,:)+R2(2*n+1:3*n,:)+R2(3*n+1:end,:);
 R2=R2./repNN; R2(repNN==0)=0;
+f=R2;
 
 fs=15; lw=2;%30;%Font size
 %
