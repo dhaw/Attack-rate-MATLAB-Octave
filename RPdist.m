@@ -15,10 +15,13 @@ for i=1:ncells
 end
 X=reshape(peakTime,a,b);
 figure
-fs=18;
+fs=12;
 colormap parula
 imagesc(X)
-set(gca,'fontsize',fs,'xticklabels',[],'yticklabels','')
+xlabel('longitude')
+ylabel('latitude')
+colorbar
+set(gca,'fontsize',fs,'xticklabels',[],'yticklabels',[])
 
 
 

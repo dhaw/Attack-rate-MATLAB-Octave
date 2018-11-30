@@ -1,4 +1,5 @@
 function f=plotMA(A,Acum,NN)
+%A and Acum/cumulative - wring way round! A=f, Acum=g
 cbaroff=1;
 fs=15;%Font size: 30 for large
 lw=2;%1.5
@@ -8,6 +9,19 @@ cell=6;
 Ni=repmat(NN,1,tauend);
 B=sum(Acum.*Ni,1)/sum(NN);
 n=length(NN);
+%%
+%As fraction of total AR for each year:
+%{
+sumYear=sum(A,1);
+sumYear(sumYear==0)=1;
+sumYear=repmat(sumYear,n,1);
+A=A./sumYear;
+sumYear=sum(Acum,1);
+sumYear(sumYear==0)=1;
+sumYear=repmat(sumYear,n,1);
+Acum=Acum./sumYear;
+%}
+%%
 %Trim:
 %{
 NN=trimbyk(NN); n=length(NN); A2=zeros(n,tauend); A3=A2;
@@ -17,18 +31,18 @@ for i=1:tauend
 end
 Acum=A2; A=A3;
 %}
-
+%%
 %cmap=[cool(n);gray(n)];
 NA=[NN,Acum]; NA=sortrows(NA,1); Acum=NA(:,2:end);
 NA=[NN,A]; NA=sortrows(NA,1); A=NA(:,2:end);
 Nsort=sortrows(NN); [maxN,cellm]=max(Nsort);
 %cellm=200;
 %f=Nsort(cellm);
-%
+%%
 figure
 %hold on
 logN=log10(Nsort); logN(Nsort==0)=0;
-cmap=colormap(lines);
+cmap=colormap(parula);
 %cmap=.9*cmap;
 colormap(cmap)
 cc=colormap;
@@ -63,9 +77,10 @@ xlabel('Time (years)','FontSize',fs)
 ylabel('Attack rate')%('Proportion immune','FontSize',fs) Relative attack
 set(gca,'FontSize',fs);
 maxY=max(max([y1;y2])); maxY=min(maxY+.1,1);%+.1
-axis([1,newend,0,maxY])
+axis([0,newend,0,maxY])
 grid on
 grid minor
+box on
 if n>1 && cbaroff~=1
     colorbar
     caxis([0,max(logN)])

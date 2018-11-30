@@ -3,7 +3,7 @@ eps=.13;
 cross=1;
 param=(0:.01:1);%CROSS in MA1D2sub
 %
-tauend=500;%Must match MA1D2sub
+tauend=1000;%Must match MA1D2sub
 lp=length(param);
 burn=200;
 B=-1*ones(lp,tauend-burn);
@@ -12,7 +12,7 @@ numPoints=zeros(lp,1);
 numPoints2=numPoints;
 for i=1:lp
     parami=param(i);
-    %
+    %{
     %Cross:
     [ignore,g]=MA1D2sub(eps,parami);
     g=g(:,burn+1:end);
@@ -23,7 +23,7 @@ for i=1:lp
     B(i,1:lGu)=Gunique;
     numPoints(i)=lGu;
     %}
-    %{
+    %
     %Eps:
     %[f,g]=MA1D2sub(parami,cross);
     [f,g,other]=MA1D(2,0,parami);
@@ -46,16 +46,17 @@ end
 numPoints=max(numPoints);
 X=B(:,1:numPoints);
 f=X;
-%{
+%
 %Eps only:
-%numPoints2=max(numPoints2);
-%X2=B2(:,1:numPoints2);
+numPoints2=max(numPoints2);
+X2=B2(:,1:numPoints2);
+%
 g=X2;
 %}
 %
 fs=12; lw=2; ms=2.5;%7.5;
 figure
-%
+%{
 %Cross:
 plot(param,X','k.','markersize',ms)
 axis([param(1),param(end),0,1])
@@ -64,8 +65,9 @@ ylabel('R^1/(R^1+R^2)')
 set(gca,'fontsize',fs)
 grid on
 grid minor
+box on
 %}
-%{
+%
 %Eps:
 hold on
 plot(param,X2','.','markersize',ms,'color',[0,0,0])
@@ -78,6 +80,7 @@ set(gca,'fontsize',fs)
 %legend('Total immune','Newly infected')
 grid on
 grid minor
+box on
 %}
 
     

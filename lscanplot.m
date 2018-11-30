@@ -1,4 +1,6 @@
 function [Z2,x,y]=lscanplot(lscan,locs)
+truncateBox=0;
+
 figure
 Z=lscan;
 Z(Z<=0)=.05;
@@ -26,6 +28,21 @@ Z=Z(minx:maxx+4,miny-4:maxy+4);
 
 Z2=lscan(minx:maxx+4,miny-4:maxy+4);
 y=y-miny+5;
+
+if truncateBox==1
+    [z1,z2]=size(Z);
+    lx=41;%x-length
+    yto=63;%y-length
+    xfrom=z1-lx+1;
+    xdiff=z1-lx;
+    findx=find(x<xfrom);
+    x(findx)=[]; y(findx)=[];
+    findy=find(y>yto);
+    x(findy)=[]; y(findy)=[];
+    x=x-xdiff;
+    Z=Z(xfrom:end,1:yto);
+    Z2=Z2(xfrom:end,1:yto);
+end
 
 colormap([gray;.8,.0,.0])
 %colormap([hot;0,.25,.5])

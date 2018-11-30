@@ -2,7 +2,7 @@ function [f,g]=finalSizeMulti2sub(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind
 %This is an upgrade on "MA2subSpace(Debug)"
 %Parameters:
 %solvetype: ODE only
-eps=.2;
+eps=.3;
 cross=.2;
 if isdual==0
     beta=betaS;
@@ -12,14 +12,23 @@ else
     beta=betaI;
 end
 demog=1;%Ageing: 1=on
-tauend=10;
+tauend=200;
 plotTau=0;%Plot curve for this year: plotTau<1 for no plot
 time=(1:tauend);
 lt=length(time);
 t0=0; tend=3600;
 mu=0;
-S0=[0;1;0];
-%
+%%
+%Initial condition (independent of space):
+%Default - total immunity:
+S0=[1;0;0];
+%IC with immunity propto population density:
+%{
+Srand=rand(3,1);
+Srand=Srand/sum(Srand);
+S0=.2*Srand;%(1:3);
+%}
+%%
 phi1=1; phi2=0;
 numseed=10^(-8); seed=numseed;
 %
@@ -59,26 +68,34 @@ A4=[1,1,1,1;1,0,1,0;0,1,0,1]; B4=[1,0,1,0;0,1,0,1;1,0,1,0;0,1,0,1];
 A=kron(A4,D);%.*repD; is repD necessary here? Also, got dimension mismatch error - odd
 B=kron(B4,D);%.*repD;
 %
-Rzero=[1-sum(S0);flipud(S0)];
-Rzero=kron(Rzero,NNbar);
-%
+%Rzero=[1-sum(S0);flipud(S0)];
+%Rzero=kron(Rzero,NNbar);
+%%
+%Default - no spatial dependence:
+%{
 S00=1-sum(S0); S00=S00*NNbar;
-S0=kron(S0,NNbar)/sum(S0);%Number sus to each distinct set of subtypes
+S0=kron(S0,NNbar);%/sum(S0);%Number sus to each distinct set of subtypes
+%}
+%Initial condition if dependent on space:
+%
+S0space=rand(nbar,4);
+S0space=S0space./repmat(sum(S0space,2),1,4).*repmat(NNbar,1,4);
+S0=reshape(S0space(:,1:3),3*nbar,1);
+S00=S0space(:,4);
+%}
 Shat=[S0(1:nbar);S0];%This is Shat(0)
 zn=zeros(length(Shat),1);
 znbar=zeros(nbar,1);
-%
+%%
 A1=zeros(3*nbar,lt);
 A2=zeros(2*nbar,lt); A2(:,1)=zeros(2*nbar,1);%?? Why re-define 1st column?
 %
-%b1=zeros(1,lp1); b2=zeros(1,lp2);
-%b1=repmat(S00+S0(2*nbar+1:3*nbar),1,lp1).*[repmat(Prow1(2:end),nbar,1),znbar];
-%b2=repmat(S00+S0(nbar+1:2*nbar),1,lp2).*[repmat(Prow2(2:end),nbar,1),znbar];
+b1=zeros(nbar,lp1); b2=zeros(nbar,lp2);
+b1=repmat(S00+S0(2*nbar+1:3*nbar),1,lp1).*[repmat(Prow1(2:end),nbar,1),znbar];
+b2=repmat(S00+S0(nbar+1:2*nbar),1,lp2).*[repmat(Prow2(2:end),nbar,1),znbar];
 %
 %Check method/S0 definition above - *Prow if IMMUNE
-b1=zeros(nbar,lp1);
-b2=zeros(nbar,lp2);
-b2(:,1:3)=[.4*NNbar,.4*NNbar,.2*NNbar];
+%b2(:,1:3)=[.4*NNbar,.4*NNbar,.2*NNbar];
 %
 options=odeset('refine',1);
 %xoverFcn=@(t,y)evZero(t,y,nbar); 
@@ -91,13 +108,14 @@ seeddot=1;
 for tau=1:lt
 %%
 y0=[S0;zn;zn];
-%
+%{
 if tau==1
     cross1=0;
 else
     cross1=cross;
 end
 %}
+cross1=cross;
 [tout,yout]=ode45(@(t,y)integr8all(t,y,beta,gamma,nbar,A,B,NN,NNrep3,NNrep4,seed,phi1,phi2,tau,seeddot,cross1),[t0,tend],y0,options);
 if tau==plotTau
     fs=15; lw=2;

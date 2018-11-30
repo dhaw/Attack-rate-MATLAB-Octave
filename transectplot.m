@@ -1,4 +1,6 @@
 function [Z2,x,y]=transectplot(lscan,transect,locs)%Df,Dt,locs
+seedbox=1;
+
 %figure
 Z=lscan;
 %Z(Z<=0)=.05;
@@ -51,6 +53,10 @@ Z(Z~=-2)=NaN; Z(Z==-2)=1;
 Y=transect;
 Y(Y~=1)=0; Y=1-Y;
 %Y=flipud(1-Y);
+if seedbox==1
+    S=zeros(size(Z2));
+    S(11:15,end-14:end-10)=ones(5);
+end
 fs=12;
 figure
 ax1=axes;
@@ -67,15 +73,34 @@ ax3=axes;
 c=imagesc(ax3,Y,'AlphaData',.3*Y);
 %set(c,'AlphaData',isnan(Y))
 set(gca,'xtick',[],'ytick',[],'fontsize',fs)
-linkaxes([ax1,ax2,ax3])
-set([ax1,ax2,ax3],'Position',[.1 .11 .685 .815]);%[.17 .11 .685 .815]); ,ax3
-ax2.Visible='off';
-ax3.Visible='off';
-cmap=colormap(gray);
-colormap(ax1,flipud(cmap))
-colormap(ax2,[1,0,0])
-colormap(ax3,[.5,.5,.5,;0,0,1])%[0,1,1,;1,1,1]
-colorbar(ax1,'Position',[.82 .11 .05 .815],'fontsize',fs);%[.88 .11 .0675 .815],'fontsize',fs);
+
+
+if seedbox==1
+    ax4=axes;
+    c=imagesc(ax4,S,'AlphaData',.3*S);
+    set(gca,'xtick',[],'ytick',[],'fontsize',fs)
+    set([ax1,ax2,ax3,ax4],'Position',[.1 .11 .685 .815]);%[.17 .11 .685 .815]); ,ax3
+    ax2.Visible='off';
+    ax3.Visible='off';
+    ax4.Visible='off';
+    cmap=colormap(gray);
+    colormap(ax1,flipud(cmap))
+    colormap(ax2,[1,0,0])
+    colormap(ax3,[.5,.5,.5,;0,0,1])%[0,1,1,;1,1,1]
+    colormap(ax4,[0,1,0])
+    colorbar(ax1,'Position',[.82 .11 .05 .815],'fontsize',fs);%[.88 .11 .0675 .815],'fontsize',fs);
+else
+    linkaxes([ax1,ax2,ax3])
+    set([ax1,ax2,ax3],'Position',[.1 .11 .685 .815]);%[.17 .11 .685 .815]); ,ax3
+    ax2.Visible='off';
+    ax3.Visible='off';
+    cmap=colormap(gray);
+    colormap(ax1,flipud(cmap))
+    colormap(ax2,[1,0,0])
+    colormap(ax3,[.5,.5,.5,;0,0,1])%[0,1,1,;1,1,1]
+    colorbar(ax1,'Position',[.82 .11 .05 .815],'fontsize',fs);%[.88 .11 .0675 .815],'fontsize',fs);
+end
+
 %{
 colormap([gray])
 cmap=flipud(colormap);

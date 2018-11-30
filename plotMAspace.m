@@ -33,18 +33,20 @@ figure
     plot(T,R1','-','linewidth',lw)%,'color',[.5,0,0])%'o-'
     xlabel('Time (years)','FontSize',fs)
     ylabel('R (H1N1)','FontSize',fs)
-    %axis ([0,tauend,0,1]);
-    axis tight
+    axis ([0,tauend,0,1]);
+    %axis tight
     set(gca,'FontSize',fs);
     grid on
     grid minor
+    box on
     subplot(2,1,2)
     plot(T,R2','-','linewidth',lw)%,'color',[0,0,.5])%'o-'
     xlabel('Time (years)','FontSize',fs)
     ylabel('R (H3N2)','FontSize',fs)
-    %axis ([0,tauend,0,1]);
+    axis ([0,tauend,0,1]);
     axis tight
     set(gca,'FontSize',fs);
     grid on
     grid minor
+    box on
 %}

@@ -15,8 +15,8 @@ fs=18;
 %cmap=colormap(gray);
 %cmap=flipud(cmap);
 
-%cmap=flipud(gray(100));
-cmap=redblue(100);
+cmap=flipud(gray(100));
+%cmap=redblue(100);
 
 %cmap=[1,1,1;.5,.5,.5];
 %cmap=cmap.*repmat([.165,.31,.431]/.431,numCol,1);

@@ -17,7 +17,7 @@ A=F;
 AA=[min(A,[],2),max(A,[],2)];
 AA=prctile(A,[25,75],2);
 A=nanmean(A,2);
-howmany=100;
+howmany=min(n,100);
 isam=randsample(n,howmany);
 Asam=zeros(howmany,2);
 Nsam=zeros(howmany,1);
@@ -40,13 +40,13 @@ f=[meanA,cc];
 figure
 %suptitle(tit)
 %fs=40; ms=30; lwx=3; lw=3; %For presentations
-fs=18; ms=5;%12; 20
+fs=12; ms=5;%12; 20 %fs=18 for paper figures
 lwx=1; lw=1.5; %lwx=1.5
 col1=[.165,.31,.431];%[1,0,0];%[0.0512,0.4600,0.8633];%[.165,.31,.431];
 col2=[.447,.553,.647];
 col3=[0,0,0];
 %hold on
-semilogx(NN,A,'o','color',col2,'markersize',ms,'LineWidth',lwx);
+semilogx(NN,A,'o','color',col2,'markersize',ms,'LineWidth',lwx,'markerfacecolor',col2);
 %plot(NN,A,'o','color',col1,'markersize',ms,'LineWidth',lwx);
 hold on
 semilogx([1,maxN],[meanA,meanA],'k--','linewidth',lw);
@@ -70,7 +70,6 @@ ylabel('Attack rate')
 %xlabel('Proportion aged 65+','FontSize',fs);
 %ylabel(strcat('Attack rate (',tit,')'),'FontSize',fs);
 set(gca,'FontSize',fs,'xtick',[1,10,100,1000,10000,100000]);
-set(gca,'FontSize',fs);
 minY=max(minY-.1,0); maxY=min(maxY+.1,1);
 axis([0,maxN,0,maxY])%minY,maxY])
 %set(gca,'yticklabels','')

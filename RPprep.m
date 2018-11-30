@@ -1,15 +1,14 @@
 function [gamma,NN,n,K,L,Vi,Viover,kangle,h,w,rhohat,isflat,beta,boxLat,boxLong]=RPprep(lscan,R0,kangle,h,p)
+%p is alpha
 %Parameters:
-aa=1;%.58;
-%alpha=.52;
-%p=3;%2.72;
+aa=1;%Offset
 gamma=1/10;
 celldist=1;
 w=kangle-h+1;
 
 isflat=length(lscan);%Flat if just input density
 if isflat==1
-    sidea=1000;%>1 - if !d then must be column
+    sidea=5000;%>1 - if !d then must be column
     sideb=1;
     rho=h;
     lscan=rho*ones(sidea,sideb);

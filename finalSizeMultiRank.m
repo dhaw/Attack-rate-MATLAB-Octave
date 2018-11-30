@@ -1,35 +1,37 @@
-function [f,g,D]=finalSizeMulti(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,beta3,isdual,solvetype,numseed)
+function [A1,A2,M1,M2]=finalSizeMultiRank(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,isdual,solvetype,numseed,tauend,eps)
+%randic=1;
+%thetaGeom=1;
+%rate=eps;
+%
 %ZfinalSizeAllMulti2
 %isdual: 0=SM, 1=DM, 2=IM
 %solvetype: 1=FSC, 2=ODE, 3=SCM
-eps=.3;
+%eps=.2;
 if isdual==0
     beta=betaS;
 elseif isdual==1
     beta=betaD;
-elseif isdual==2
-    beta=betaI;
 else
-    beta=beta3;
+    beta=betaI;
 end
 demog=1;
-tauend=100;
+%tauend=50;
 plotTau=0;
 time=(1:tauend);
 lt=length(time);
 t0=0; tend=3600;
-mu=1/80;%In ODE code
+mu=0;%In ODE code
 phi1=1; phi2=0;
 NN0=NNrep; NN0(NNrep==0)=1;
 Nages=NNbar./NN0;
 alpha=1;%TSIR/sub-exp parameter
-randic=1;
-thetaGeom=1;
+randic=1;%Random initial conditions - otherwise pandemic
+thetaGeom=0;%Theta geometric - if so, 1-rate = parameter?
 rate=eps;
 %
 %Theta:
-%Prow=[0,0,0,1-eps,eps];
-Prow=[0,0,0,0,1-eps,eps];
+Prow=[0,0,0,eps,0,eps,1-eps];
+%Prow=[0,.1,.2,.3,.4];
 lp=length(Prow);
 Prow=Prow/sum(Prow);
 Pmat=repmat(Prow,nbar,1);
@@ -53,8 +55,6 @@ elseif isdual==1
     D=D.*Nj;
 elseif isdual==2
     D=Kbar'.*Niover.*Cbar.*Nj;
-elseif isdual==3
-    D=Kbar.*Cbar;
 end
 %%
 %Initial condition:
@@ -71,11 +71,14 @@ Z0=sum(B(:,2:end),2)*(1-mu);
 zn=zeros(nbar,1);
 A1=zeros(n,lt);
 A2=A1;
+M1=A1;
+M2=A2;
 N0=NN; N0(NN==0)=1;
 %NNprob=NNbar/sum(NN); NNprob=ones(nbar,1)/sum(NNbar);
 seed=numseed;%*NNprob;
 seedvec=zeros(nbar,1); seedvec(2*n+1:3*n)=seed*ones(n,1);
 thresh=0;%Remove from ODE solver
+nvec=(1:n)';
 for t=1:lt    
     if solvetype==1
     %Final size:
@@ -91,12 +94,21 @@ for t=1:lt
     Zsol=Zsol./NN0;
     end
     nu=Zsol-Z0;
-    A1(:,t)=sum(reshape(Zsol,n,na),2);%Prop immune for spatial cell (before antigenic drift)
-    A2(:,t)=sum(reshape(nu,n,na),2);%AR for spatial cell
     %
+    a1t=[nvec,sum(reshape(Zsol,n,na),2)];%Prop immune for spatial cell (before antigenic drift)
+    yearImmune=a1t(:,2);
+    a1t=sortrows(a1t,2);
+    a2t=[nvec,sum(reshape(nu,n,na),2)];%AR for spatial cell
+    yearAttack=a2t(:,2);
+    a2t=sortrows(a2t,2);
+    A1(:,t)=a1t(:,1);
+    A2(:,t)=a2t(:,1);
+    M1(:,t)=yearImmune;
+    M2(:,t)=yearAttack;
     if thetaGeom==1
         Z0=(1-rate)*(1-mu)*Zsol;
     else
+    %
     %Assign immunity:
     Bhat=[B(:,2:end),zeros(nbar,1)];
     B=Bhat+repmat(nu,1,lp).*Pmat;
@@ -116,8 +128,6 @@ for t=1:lt
 end
 %%
 %}
-f=A1;
-g=A2;
 end
 
 function f=solveZi(Zi,Z0,beta,gamma,D,Nages,addbit)
@@ -147,7 +157,7 @@ Y=yout(:,nbar+1:2*nbar); %Z=yout(:,2*nbar+1:3*nbar);
 Ysum=sum(Y,2);
 Yall=Y(:,1:n)+Y(:,n+1:2*n)+Y(:,2*n+1:3*n)+Y(:,3*n+1:end);
 Yall=abs(Yall);%****cheat ;)
-%
+%{
 %Unlogged plots:
 hold on
 %plot(tout,Y1,'--','linewidth',lw,'color',[.165,.31,.431]);%[.165,.31,.431][.447,.553,.647]
@@ -155,7 +165,7 @@ hold on
 plot(tout,Ysum,'k','linewidth',lw);
 plot(tout,Yall);
 %}
-%{
+%
 %Logged plots:
 semilogy(tout,Ysum,'k','linewidth',lw);
 hold on
@@ -166,7 +176,7 @@ ylabel('Prevalence','FontSize',fs);
 set(gca,'FontSize',fs);
 maxY=max(Ysum);
 %axis([0,tend,0,maxY])
-axis ([0,tend,0,maxY])
+axis ([0,100,0,maxY])
 %legend('Min','Max','location','NE')
 grid on
 grid minor

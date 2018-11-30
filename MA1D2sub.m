@@ -7,7 +7,7 @@ R0=1.8; gamma=1/2.6;
 NN=1; n=length(NN);
 demog=1;%Ageing: 1=on
 amax=80;
-tauend=50;
+tauend=1000;
 plotTau=0;
 time=(1:tauend);
 lt=length(time);

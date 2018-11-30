@@ -1,6 +1,6 @@
-function f=RPmultiple
+function f=RPmultipleMFA
 %Change epiRP to output g=Ysum
-p=(2:.5:6);
+p=(0:.5:6);
 lp=length(p);
 tend=360;
 plotto=180;
@@ -11,19 +11,18 @@ maxY=0;
 figure
 fs=12; lw=2;
 cmap=parula(lp);
-colormap parula
 
-[gamma,NN,n,K,L,Vi,Viover,kangle,h,w,rhohat,isflat,beta,boxLat,boxLong]=RPprep(1,2.2,kangle,h,p(1));
+[gamma,NN,n,K,L,Vi,Viover,kangle,h,w,rhohat,isflat,beta,boxLat,boxLong]=RPprep(1,3,kangle,h,p(1));
 loc=randsample(n,10);
 [tout,Ysum]=RPepi(gamma,NN,n,K,L,Vi,Viover,beta,kangle,h,w,rhohat,isflat,10^(-4),1,boxLat,boxLong,loc);%Sample=1 - redundant
-semilogy(tout,Ysum/n/h,'linewidth',lw,'color',cmap(1,:));%,'color',cmap(1,:)
+semilogy(tout,Ysum/n/h,'color',cmap(1,:),'linewidth',lw);
 maxY=max(maxY,max(Ysum));
 
 hold on
 for i=2:lp
-    [gamma,NN,n,K,L,Vi,Viover,kangle,h,w,rhohat,isflat,beta,boxLat,boxLong]=RPprep(1,2.2,kangle,h,p(i));
+    [gamma,NN,n,K,L,Vi,Viover,kangle,h,w,rhohat,isflat,beta,boxLat,boxLong]=RPprep(1,3,kangle,h,p(i));
     [tout,Ysum]=RPepi(gamma,NN,n,K,L,Vi,Viover,beta,kangle,h,w,rhohat,isflat,10^(-4),1,boxLat,boxLong,loc);
-    semilogy(tout,Ysum/n/h,'linewidth',lw,'color',cmap(i,:));%,'color',cmap(i,:)
+    semilogy(tout,Ysum/n/h,'color',cmap(i,:),'linewidth',lw);
     maxY=max(maxY,max(Ysum));
 end
 xlabel('Time (days)','FontSize',fs);

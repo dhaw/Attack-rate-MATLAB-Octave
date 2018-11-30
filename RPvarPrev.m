@@ -1,8 +1,8 @@
 function f=RPvarPrev(tvec,Y,boxLat,boxLong)
-Y(Y==0)=NaN;
+%Y(Y==0)=NaN;
 Yvar=nanvar(Y,0,2);
 Yvar=sqrt(Yvar);
-fs=18; lw=2;
+fs=12; lw=2;
 logVar=1;
 logDist=1;
 distNotSpeed=1;%1 for distance to peak, 0 (or other) for speed
@@ -29,7 +29,7 @@ if logVar==1
     grid minor
 else
     plot(tvec,Yvar,'r-','linewidth',lw)
-    axis([0,tvec(end),0,plotMax])
+    axis ([0,tvec(end),0,plotMax])
     xlabel('Time (days)','FontSize',fs);
     if incidence==1
         ylabel('\sigma(inc.)','FontSize',fs);
@@ -55,8 +55,8 @@ for i=1:lt
     peakLoc(i)=indi;
 end
 
-if distNotSpeed==0
-    peakLoc=diff(peakLoc); tvec(1)=[];
+if distNotSpeed~=1
+    peakLoc=diff(peakLoc).*diff(tvec); tvec(1)=[];
 end
 
 plotMax=max(peakLoc);
