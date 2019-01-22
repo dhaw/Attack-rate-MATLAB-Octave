@@ -2,7 +2,7 @@ function [gamma,NN,n,nbar,na,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS
 %stoch=1 for SCM(/ABM)
 %Parameters:
 aa=.58;
-aaR=.91;
+%aaR=.91;
 aaU=0;
 alpha=.52;
 alphaR=.56;
@@ -13,9 +13,23 @@ pU=2.7;
 gamma=1/2.6;
 celldist=1;%km
 a1immobile=0;
-normaliseKernel=0;
+normaliseKernel=1;
+ageSpec=0;%Chinese K only - not Truscott
 R0=1.8;
-testK=1;%For test cases of K (e.g. random)
+testK=0;%For test cases of K (e.g. random)
+%Adult/child/rural/urban
+aaA=.58;
+aaC=.87;
+aaR=.91;
+aaU=0;
+alphaA=.52;
+alphaC=.52;
+alphaR=.56;
+alphaU=.4;
+pA=2.7;
+pC=3.24;
+pR=2.84;
+pU=2.7;
 %%
 %{
 Cnum=[6.92,.25,.77,.45;.19,3.51,.57,.2;.42,.38,1.4,.17;.36,.44,1.03,1.83];
@@ -23,8 +37,8 @@ Cdur=[3.88,.28,1.04,.49;.53,2.51,.75,.5;1.31,.8,1.14,.47;1,.85,.88,1.73];
 C=Cnum.*Cdur;
 %}
 %UK (from vaxedemic):
-C=[37.4622640266199,13.2337799407673,9.35866526693108,5.27807222067513;17.2304141889828,98.1983003738366,17.0186152145963,10.1131975048866;9.46784315245156,9.4416088929148,16.22285757548,5.7675253611147;1.38284918679668,1.26680284573205,1.08367881504336,3.88324564380799];
-%C=[6.92,.25,.77,.45;.19,3.51,.57,.2;.42,.38,1.4,.17;.36,.44,1.03,1.83];
+%C=[37.4622640266199,13.2337799407673,9.35866526693108,5.27807222067513;17.2304141889828,98.1983003738366,17.0186152145963,10.1131975048866;9.46784315245156,9.4416088929148,16.22285757548,5.7675253611147;1.38284918679668,1.26680284573205,1.08367881504336,3.88324564380799];
+C=UKage;
 %Steven's paper:
 %C=[6,.5;1,.5];
 %Comment in to turn age off:
@@ -68,44 +82,70 @@ maxN=CC(1,1);
 ages=0;%sparse(n,maxN);
 %
 %No Urban/rural distinction:
-%{
-K=1./(1+(r./aa).^(p));
-Nalpha=NN'.^alpha;
-Njalpha=repmat(Nalpha,n,1);
-Nione=repmat(NN,1,n);
-K=K.*Njalpha.*Nione;
-%}
-%
-%Truscott:
-K=1./(1+(r./13.5).^3.9)+.3*eye(n);
-Nalpha=NN'.^.95;
-Njalpha=repmat(Nalpha,n,1);
-K=K.*Njalpha;
-%}
-%Test:
-if testK==1
-    K=rand(n);
-    %K=K+K';
-    %K=K+20*K.*eye(n);
-    %K=K-.9*K.*eye(n);
+if ageSpec==0
+    %
+    K=1./(1+(r./aa).^(p));
+    Nalpha=NN'.^alpha;
+    Njalpha=repmat(Nalpha,n,1);
+    %Nione=repmat(NN,1,n);
+    K=K.*Njalpha;%.*Nione;
+    %}
+    %{
+    %Truscott:
+    K=1./(1+(r./8.5).^3.9)+.3*eye(n);
+    Nalpha=NN'.^.95;
+    Njalpha=repmat(Nalpha,n,1);
+    K=K.*Njalpha;
+    %}
+    %Test:
+    if testK==1
+        K=rand(n);
+        %K=K+K';
+        %K=K+20*K.*eye(n);
+        %K=K-.9*K.*eye(n);
+    end
+    %
+    sumK=sum(K,2);
+    repK=repmat(sumK,1,n);
+    repK(repK==0)=1;
+    if normaliseKernel==1
+        K=K./repK;
+    end
+    %}
+    %
+    %Expand K and C:
+    Kbar=repmat(K,na,na);
+    %keye=eye(n);
+    %kxeye=ones(n)-keye;
+    %Cbar=kron(Ca,keye)+kron(Cb,kxeye);
+    %%
+    %R0 calculation:
+    K1=kron(eye(na),K);
+else
+    KA=1./(1+(r./aaA).^(pA));
+    NalphaA=NN'.^alphaA;
+    NjalphaA=repmat(NalphaA,n,1);
+    Nione=repmat(NN,1,n);
+    KA=KA.*NjalphaA.*Nione;
+    KC=1./(1+(r./aaC).^(pC));
+    NalphaC=NN'.^alphaC;
+    NjalphaC=repmat(NalphaC,n,1);
+    KC=KC.*NjalphaC.*Nione;
+    sumKA=sum(KA,2); sumKC=sum(KC,2);
+    repKA=repmat(sumKA,1,n); repKC=repmat(sumKC,1,n);
+    repKA(repKA==0)=1; repKC(repKC==0)=1;
+    if normaliseKernel==1
+        KA=KA./repKA; KC=KC./repKC;
+    end
+    Kbar=[KC,KC,KC,KC;KC,KC,KC,KC;KA,KA,KA,KA;KA,KA,KA,KA];
+    %Kbar=[KC,KC,KA,KA;KC,KC,KA,KA;KC,KC,KA,KA;KC,KC,KA,KA];
+    z=zeros(n);
+    K1=[KC,z,z,z;z,KC,z,z;z,z,KA,z;z,z,z,KA];
 end
-%
-sumK=sum(K,2);
-repK=repmat(sumK,1,n);
-repK(repK==0)=1;
-if normaliseKernel==1
-    K=K./repK;
-end
-%}
-%
-%Expand K and C:
-Kbar=repmat(K,na,na);
 keye=eye(n);
 kxeye=ones(n)-keye;
 Cbar=kron(Ca,keye)+kron(Cb,kxeye);
 %%
-%R0 calculation:
-K1=kron(eye(na),K);
 %Children immobile:
 if a1immobile==1
     %Kbar(1:n,1:n)=eye(n); K1(1:n,1:n)=eye(n);

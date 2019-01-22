@@ -3,7 +3,6 @@ function [f,g,D]=finalSizeMulti(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,m
 %isdual: 0=SM, 1=DM, 2=IM
 %solvetype: 1=FSC, 2=ODE, 3=SCM
 %eps=.3;
-ICdepAge=1;
 if isdual==0
     beta=betaS;
 elseif isdual==1
@@ -25,7 +24,7 @@ NN0=NNrep; NN0(NNrep==0)=1;
 Nages=NNbar./NN0;
 alpha=1;%TSIR/sub-exp parameter
 %randic=1;
-thetaGeom=0;
+thetaGeom=1;
 rate=eps;
 %
 %Theta:
@@ -89,17 +88,16 @@ if randic==1
         lNZ=length(findNZ);
         randNZ=rand(lNZ,1);
         Prows(findNZ)=randNZ;
-        rand2=rand(nbar,1); repRand=repmat(rand2,1,maxYears);
+        rand2=rand(nbar,1); repRand=repmat(rand2,1,prow);
         sumP=sum(Prows,2); repP=repmat(sumP,1,maxYears);
-        Nratio=repmat(NNbar./NNrep,1,maxYears);
-        B=Prows./repP.*repRand.*Nratio;
+        B=Prows./repP.*repRand;
         B(isinf(B)==1)=0; B(isnan(B)==1)=0;
         B=[zeros(nbar,1),B];
     else
         maxYears=lp-1;
         Prows=zeros(n,maxYears);
         numNonZero=floor((maxYears+1)*rand(n,1));%0-6 years - pick whow many are non zero
-        for i=1:n
+        for i=1:nbar
             rsi=randsample(maxYears,numNonZero(i));
             Prows(i,rsi)=1;
         end
@@ -107,13 +105,13 @@ if randic==1
         lNZ=length(findNZ);
         randNZ=rand(lNZ,1);
         Prows(findNZ)=randNZ;
-        rand2=rand(n,1); repRand=repmat(rand2,1,maxYears);
+        rand2=rand(nbar,1); repRand=repmat(rand2,1,prow);
         sumP=sum(Prows,2); repP=repmat(sumP,1,maxYears);
         B=Prows./repP.*repRand;
         B(isinf(B)==1)=0; B(isnan(B)==1)=0;
-        NNratio=repmat(NNbar./NNrep,1,maxYears);
-        B=[zeros(nbar,1),repmat(B,4,1).*NNratio];
-    end
+        B=[zeros(nbar,1),B];
+    %What if dependent only on space, not age?********
+    %rand(n,1) and repear for B
 end
 %}
 %

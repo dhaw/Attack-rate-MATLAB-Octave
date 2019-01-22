@@ -44,12 +44,12 @@ fs=12; ms=5;%12; 20 %fs=18 for paper figures
 lwx=1; lw=1.5; %lwx=1.5
 col1=[.165,.31,.431];%[1,0,0];%[0.0512,0.4600,0.8633];%[.165,.31,.431];
 col2=[.447,.553,.647];
-col3=[0,0,0];
+col3=[0,0,0.5];
 %hold on
-semilogx(NN,A,'o','color',col2,'markersize',ms,'LineWidth',lwx,'markerfacecolor',col2);
+semilogx(NN,A,'o','color',col3,'markersize',ms,'LineWidth',lwx)%,'markerfacecolor',col3);
 %plot(NN,A,'o','color',col1,'markersize',ms,'LineWidth',lwx);
 hold on
-semilogx([1,maxN],[meanA,meanA],'k--','linewidth',lw);
+semilogx([1,maxN],[meanA,meanA],'--','linewidth',lw,'color',[.5,0,0]);
 
 %errorbar(Nsam,meansam,AA(:,1),AA(:,2),'ko','markerfacecolor','w','markeredgecolor','k','markersize',ms);
 
@@ -78,3 +78,11 @@ grid minor
 box on
 hold off
 end
+
+%%
+%{
+figure; hold on; plot([meanfc,meanfc],[1000,1000],'--','color',[.5,0,0],'linewidth',2); h1=hist(fc); xlabel('Attack rate'), ylabel('Frequency'); set(gca,'fontsize',12); grid on; grid minor; box on
+hist(fc,20)
+plot([meanfc,meanfc],[0,1000],'--','color',[.5,0,0],'linewidth',2);
+axis([.37,.45,0,800]))
+%}

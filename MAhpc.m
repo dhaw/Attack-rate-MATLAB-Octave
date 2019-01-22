@@ -1,4 +1,5 @@
 function [f,g]=MAhpc%(C,Q,Qeven,fpand)
+%old
 load('forMAhpc.mat')
 %eps=(0:1:1);
 %leps=length(eps);

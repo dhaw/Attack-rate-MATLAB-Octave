@@ -15,6 +15,7 @@ phi1=1; phi2=0;
 %NNprob=NNbar/sum(NN); %NNprob=ones(nbar,1)/sum(NNbar);
 numseed=10^(-3); seed=numseed;%*NNprob;
 addbit=0;%seed;%********SEED IN FSC********
+randic=1;
 %
 %Theta:
 %eps=.15;
@@ -76,6 +77,22 @@ B=zeros(nbar,lp);
 %Z0=sum(B(:,2:end),2)*(1-mu);
 Z0=start*ones(nbar,1);%Initial immunity
 %Z0=zeros(nbar,1)+start*rand(nbar,1);
+if randic==1
+    maxYears=lp-1;
+    numNonZero=ceil(maxYears*rand);%1-6 years - pick whow many are non zero
+    here=randsample(maxYears,numNonZero); pend=max(here);%Pick which ones are non-zero
+    vals=rand(1,numNonZero);%Random number for each non-zero
+    vals=rand*vals/sum(vals);%Total proportion immune=rand
+    ProwRand=zeros(1,pend);
+    ProwRand(here)=vals;
+    Brand=rand(nbar,1).*NNbar./NN0;
+    pdiff=maxYears-pend;
+    if pdiff>0
+        ProwRand(pend+1:maxYears)=0;
+    end
+    B=[zeros(nbar,1),repmat(ProwRand,nbar,1).*repmat(Brand,1,maxYears)];
+    Z0=sum(B(:,2:end),2)*(1-mu);
+end
 %%
 zn=zeros(nbar,1);
 for tau=1:lt

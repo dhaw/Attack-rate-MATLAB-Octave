@@ -2,10 +2,12 @@ function f=plotMA2subRank(g)%,NN)
 [a,tauend]=size(g);
 nbar=a/2;
 n=nbar/4;
+thresh=.005;
 h1=g(1:n,:)+g(n+1:2*n,:)+g(2*n+1:3*n,:)+g(3*n+1:4*n,:);
 h2=g(4*n+1:5*n,:)+g(5*n+1:6*n,:)+g(6*n+1:7*n,:)+g(7*n+1:end,:);
-h1sum=sum(h1,1); h2sum=sum(h2,1);
-h1=h1(:,h1sum>.0001); h2=h2(:,h2sum>.0001);
+%h1sum=sum(h1,1); h2sum=sum(h2,1);
+h1sum=max(h1,[],1); h2sum=max(h2,[],1);
+h1=h1(:,h1sum>thresh); h2=h2(:,h2sum>thresh);
 l1=size(h1,2); l2=size(h2,2);
 X1=zeros(n,l1); X2=zeros(n,l2);
 nvec=(1:n)';
@@ -19,7 +21,7 @@ for i=1:l2
     v=sortrows(v,2);
     X2(:,i)=v(:,1);
 end
-fs=15; lw=2;
+fs=12; lw=2;
 figure
     subplot(2,1,1)
     plot(1:l1,X1,'-','linewidth',lw)%,'color',[.5,0,0])%'o-'

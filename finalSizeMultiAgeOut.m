@@ -1,9 +1,8 @@
-function [f,g,D]=finalSizeMulti(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,beta3,isdual,solvetype,numseed,eps,randic,tauend)
+function [f,g,D]=finalSizeMultiAgeOut(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,beta3,isdual,solvetype,numseed,eps)
 %ZfinalSizeAllMulti2
 %isdual: 0=SM, 1=DM, 2=IM
 %solvetype: 1=FSC, 2=ODE, 3=SCM
 %eps=.3;
-ICdepAge=1;
 if isdual==0
     beta=betaS;
 elseif isdual==1
@@ -14,17 +13,17 @@ else
     beta=beta3;
 end
 demog=1;
-%tauend=1;
+tauend=1;
 plotTau=0;
 time=(1:tauend);
 lt=length(time);
-t0=0; tend=1800;
+t0=0; tend=360;
 mu=1/80;%In ODE code
 phi1=1; phi2=0;
 NN0=NNrep; NN0(NNrep==0)=1;
 Nages=NNbar./NN0;
 alpha=1;%TSIR/sub-exp parameter
-%randic=1;
+randic=0;
 thetaGeom=0;
 rate=eps;
 %
@@ -62,58 +61,9 @@ end
 %Initial condition:
 B=zeros(nbar,lp);
 if randic==1
-    %{
-    maxYears=lp-1;
-    R=rand(nbar,maxYears);
-    R=round(R); rsum=sum(sum(R)); S=rand(rsum,1);
-    R(R==1)=S;
-    Rsum=sum(R,2); Rsum(Rsum==0)=1; R=R./repmat(Rsum,1,maxYears);
-    T=rand(nbar,1).*NNbar./NN0; Trep=repmat(T,1,maxYears);
-    B=[zeros(nbar,1),R.*Trep];
-    %}
-    %{
     ProwRand=rand(1,lp+1); ProwRand(1)=[]; ProwRand=ProwRand/sum(ProwRand);
     Brand=rand(nbar,1).*NNbar./NN0; %Brand=rand(1)*Brand./repmat(sum(Brand,2),1,lp);
     B=repmat(ProwRand,nbar,1).*repmat(Brand,1,lp);
-    %}
-    %
-    if ICdepAge==1
-        maxYears=lp-1;
-        Prows=zeros(nbar,maxYears);
-        numNonZero=floor((maxYears+1)*rand(nbar,1));%0-6 years - pick whow many are non zero
-        for i=1:nbar
-            rsi=randsample(maxYears,numNonZero(i));
-            Prows(i,rsi)=1;
-        end
-        findNZ=find(Prows);
-        lNZ=length(findNZ);
-        randNZ=rand(lNZ,1);
-        Prows(findNZ)=randNZ;
-        rand2=rand(nbar,1); repRand=repmat(rand2,1,maxYears);
-        sumP=sum(Prows,2); repP=repmat(sumP,1,maxYears);
-        Nratio=repmat(NNbar./NNrep,1,maxYears);
-        B=Prows./repP.*repRand.*Nratio;
-        B(isinf(B)==1)=0; B(isnan(B)==1)=0;
-        B=[zeros(nbar,1),B];
-    else
-        maxYears=lp-1;
-        Prows=zeros(n,maxYears);
-        numNonZero=floor((maxYears+1)*rand(n,1));%0-6 years - pick whow many are non zero
-        for i=1:n
-            rsi=randsample(maxYears,numNonZero(i));
-            Prows(i,rsi)=1;
-        end
-        findNZ=find(Prows);
-        lNZ=length(findNZ);
-        randNZ=rand(lNZ,1);
-        Prows(findNZ)=randNZ;
-        rand2=rand(n,1); repRand=repmat(rand2,1,maxYears);
-        sumP=sum(Prows,2); repP=repmat(sumP,1,maxYears);
-        B=Prows./repP.*repRand;
-        B(isinf(B)==1)=0; B(isnan(B)==1)=0;
-        NNratio=repmat(NNbar./NNrep,1,maxYears);
-        B=[zeros(nbar,1),repmat(B,4,1).*NNratio];
-    end
 end
 %}
 %
@@ -124,7 +74,7 @@ Z0=sum(B(:,2:end),2)*(1-mu);
 
 %%
 zn=zeros(nbar,1);
-A1=zeros(n,lt);
+A1=zeros(nbar,lt);
 A2=A1;
 N0=NN; N0(NN==0)=1;
 %NNprob=NNbar/sum(NN); NNprob=ones(nbar,1)/sum(NNbar);
@@ -147,15 +97,11 @@ for t=1:lt
     Zsol=Zsol./NN0;
     end
     nu=Zsol-Z0;
-    A1(:,t)=sum(reshape(Zsol,n,na),2);%Prop immune for spatial cell (before antigenic drift)
-    A2(:,t)=sum(reshape(nu,n,na),2);%AR for spatial cell
+    A1(:,t)=Zsol;%Prop immune for spatial cell (before antigenic drift)
+    A2(:,t)=nu;%AR for spatial cell
     %
     if thetaGeom==1
-        if demog==1
-            Z0=(1-rate)*(1-mu)*Zsol;
-        else
-            Z0=(1-rate)*Zsol;
-        end
+        Z0=(1-rate)*(1-mu)*Zsol;
     else
     %Assign immunity:
     Bhat=[B(:,2:end),zeros(nbar,1)];

@@ -1,5 +1,5 @@
 function f=plotMAnospace(Asus,Arec,NN,ar)
-fs=15; lw=2;%30;%Font size
+fs=12; lw=2;%30;%Font size
 tauend=size(Asus,2);
 %
 figure

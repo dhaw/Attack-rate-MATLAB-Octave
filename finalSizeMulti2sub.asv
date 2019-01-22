@@ -90,7 +90,7 @@ if randic==1
     %}
     %From 1D model:
     if ICdepAge==1
-        r=1;
+        r=0;
         maxYears1=lp1-1;
         Prows=zeros(nbar,maxYears1);
         numNonZero=floor((maxYears1+1)*rand(nbar,1));%0-6 years - pick whow many are non zero
@@ -158,8 +158,8 @@ if randic==1
             Nratio3=Nratio2;
         end
         Z1=Z1.*Nratio3;
-        s01=sum(X1,2).*NNbar; s10=sum(Y1,2).*NNbar; s00=sum(Z1,2).*NNbar; %s11=NNbar./NNrep-s01-s10-s00; s11(NNrep==0)=0;
-        s11=NNbar-s01-s10-s00; s11(NNrep==0)=0;
+        s01=sum(X1,2).*NNbar; s10=sum(Y1,2).*NNbar; s00=sum(Z1,2).*NNbar; s11=NNbar./NNrep-s01-s10-s00; 
+        s11(NNrep==0)=0;
         S0=[s11;s10;s01];
     else
         error('This bit of code isnt written yet')

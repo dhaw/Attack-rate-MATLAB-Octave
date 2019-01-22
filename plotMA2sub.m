@@ -1,4 +1,4 @@
-function f=plotMAspace(Asus,Arec,NN,NNbar)
+function f=plotMAs2sub(Asus,Arec,NN,NNbar)
 %ar=1;
 
 tauend=size(Arec,2);

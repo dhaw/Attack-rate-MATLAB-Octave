@@ -12,6 +12,9 @@ numPoints=zeros(lp,1);
 numPoints2=numPoints;
 for i=1:lp
     parami=param(i);
+    
+    %for j=1:thismany
+    
     %{
     %Cross:
     [ignore,g]=MA1D2sub(eps,parami);
@@ -32,7 +35,7 @@ for i=1:lp
     Funique=unique(f);
     lFu=length(Funique);
     B2(i,1:lFu)=Funique;
-    numPoints2(i)=lFu;g;%
+    numPoints2(i)=lFu;
     %
     g=g(:,burn+1:end);
     G=g;%sum(g,1);%G=g if use MA1D
@@ -40,6 +43,10 @@ for i=1:lp
     lGu=length(Gunique);
     B(i,1:lGu)=Gunique;
     numPoints(i)=lGu;
+    
+    
+    %end
+    
     %}
 end
 %

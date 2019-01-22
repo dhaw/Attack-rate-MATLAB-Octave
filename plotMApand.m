@@ -1,4 +1,4 @@
-function f=plotMA(A,Acum,NN)
+function f=plotMApand(A,Acum,NN,fp)
 %A and Acum/cumulative - wring way round! A=f, Acum=g
 cbaroff=1;
 fs=12;%Font size: 30 for large
@@ -9,7 +9,6 @@ cell=6;
 Ni=repmat(NN,1,tauend);
 B=sum(Acum.*Ni,1)/sum(NN);
 n=length(NN);
-plotAll=1;
 %%
 %As fraction of total AR for each year:
 %{
@@ -33,32 +32,24 @@ end
 Acum=A2; A=A3;
 %}
 %%
-%Sort:
-Nsort=NN;
-%{
 %cmap=[cool(n);gray(n)];
 NA=[NN,Acum]; NA=sortrows(NA,1); Acum=NA(:,2:end);
 NA=[NN,A]; NA=sortrows(NA,1); A=NA(:,2:end);
 Nsort=sortrows(NN); [maxN,cellm]=max(Nsort);
 %cellm=200;
 %f=Nsort(cellm);
-%}
 %%
 figure
 %hold on
 logN=log10(Nsort); logN(Nsort==0)=0;
-%cmap=colormap(parula);
-cmap=colormap(lines);
-
+cmap=colormap(parula);
 %cmap=.9*cmap;
 colormap(cmap)
 cc=colormap;
 %imagesc(logN);
 %cc=flipud(colormap);
-%%
-%Select cells to plot:
 lc=size(cc,1);
-if n>1 && plotAll==0
+if n>1
     Gs=round(interp1(linspace(min(logN(:)),max(logN(:)),lc),1:lc,logN));
     CC=reshape(cc(Gs,:),[size(Gs) 3]);%Make RGB image from scaled
     %
@@ -71,18 +62,29 @@ if n>1 && plotAll==0
     end
     sam=(bottom:nn:n); thismany=length(sam);%nn+
     y1=Acum(sam,:); y2=A(sam,:); cc=CC(sam,:);
-elseif n>1 && plotAll==1
-    y1=Acum; y2=A; thismany=n; cc=lines(n);
 else
     y1=Acum; y2=A; thismany=1; cc=[.447,.553,.647];
 end
+%
 y1=y1(:,1:newend); y2=y2(:,1:newend);
 T=1:newend;
+
+X=zeros(1,newend);
+Y=X;
+for i=1:newend
+    xi=corrcoef(Acum(:,i),fp);
+    X(i)=xi(1,2);
+    yi=corrcoef(A(:,i),fp);
+    Y(i)=yi(1,2);
+end
+
 hold on
 for i=1:thismany%Yes, this loop is clonky
     plot(T,y1(i,:),':','linewidth',lw,'color',cc(i,:));%[.5,.5,.5])%cc(i,:)); 'o-'
     plot(T,y2(i,:),'-','linewidth',lw,'color',cc(i,:));%[0,0,0])%cc(i,:)); 'o-'
 end
+plot(T,X,'k-','linewidth',lw)
+plot(T,Y,'k--','linewidth',lw)
 xlabel('Time (years)','FontSize',fs)
 ylabel('Attack rate')%('Proportion immune','FontSize',fs) Relative attack
 set(gca,'FontSize',fs);

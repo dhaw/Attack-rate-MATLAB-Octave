@@ -2,7 +2,7 @@ function f=plotMAsample(A,Acum,NN,sample)
 %sample=find(Is)
 %For now: colormap not rep of pop density - relevant for fluscape?
 cbaroff=1;
-fs=18;%Font size: 30 for large/15 by default?
+fs=12;%Font size: 30 for large/15 by default?
 lw=2;%1.5
 tauend=size(A,2);
 newend=min(tauend,500);

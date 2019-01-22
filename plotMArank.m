@@ -1,7 +1,9 @@
 function f=plotMArank(h1,h2)%,Acum,Arank,AcumRank,NN)
 [n,tauend]=size(h1);
-h1sum=sum(h1,1); h2sum=sum(h2,1);
-h1=h1(:,h1sum>.0001); h2=h2(:,h2sum>.0001);
+thresh=.005;
+%h1sum=sum(h1,1); h2sum=sum(h2,1);
+h1sum=max(h1,[],1); h2sum=max(h2,[],1);
+h1=h1(:,h1sum>thresh); h2=h2(:,h1sum>thresh);%h2
 l1=size(h1,2); l2=size(h2,2);
 X1=zeros(n,l1); X2=zeros(n,l2);
 nvec=(1:n)';
@@ -21,7 +23,7 @@ for i=1:l2
     X2(:,i)=v(:,1);
 end
 f=X2;
-fs=15; lw=2;
+fs=12; lw=2;
 figure
     subplot(2,1,1)
     plot(1:l1,X1,'-','linewidth',lw)%,'color',[.5,0,0])%'o-'

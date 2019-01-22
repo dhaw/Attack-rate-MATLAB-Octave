@@ -57,7 +57,7 @@ for j=1:b
         grid2(miny:maxy,j)=1;
     end
 end
-%
+%{
 figure
 grid3=grid2;
 grid3(xy)=2;

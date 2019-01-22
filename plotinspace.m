@@ -1,13 +1,13 @@
-function f=plotinspace(D)%,minNind,maxNind)
-trim=4; trim2=2*trim;
-%D=reshape(D,33-trim2,55-trim2);%Or trimbyk then reshape
-%[a,b]=size(D);
+function f=plotinspace(D,fglob)%,minNind,maxNind)
+%trim=4; trim2=2*trim;
+%%D=reshape(D,33-trim2,55-trim2);%Or trimbyk then reshape
+%%[a,b]=size(D);
 
-D=D(trim+1:end-trim,trim-1:end-trim);
+%D=D(trim+1:end-trim,trim-1:end-trim);
 
 maxD=max(max(D));
 figure
-fs=18;
+fs=12;
 %colormap parula
 %colormap gray
 %numCol=20;
@@ -15,8 +15,9 @@ fs=18;
 %cmap=colormap(gray);
 %cmap=flipud(cmap);
 
-cmap=flipud(gray(100));
-%cmap=redblue(100);
+%cmap=flipud(gray(100));
+cmap=redblue(100);
+D=D-fglob;
 
 %cmap=[1,1,1;.5,.5,.5];
 %cmap=cmap.*repmat([.165,.31,.431]/.431,numCol,1);
@@ -51,10 +52,11 @@ set(gca,'YTickLabel','')
 set(gca,'fontsize',fs)
 hcb=colorbar;
 
-caxis([-vmax,vmax])%([0,vmax])%([-vmax,vmax])%cmap=[1,1,1;cmap];
+caxis([-vmax,vmax])%([0,vmax])([-vmax,vmax])%cmap=[1,1,1;cmap];
 
 v=(-vv:.02:vv);
-set(hcb,'YTick',v)
+%set(hcb,'YTick',v)
+set(hcb,'YTick',-.4:.1:.4)
 hold off
 
 f=maxD;

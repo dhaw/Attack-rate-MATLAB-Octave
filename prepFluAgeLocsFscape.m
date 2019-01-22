@@ -1,8 +1,8 @@
-function [gamma,NN,n,nbar,na,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,ages0,truscaa]=prepFluAge(D1,D2,D3,D4,R0,stoch,delta,celldist,truscaa)%,U)
+function [gamma,NN,n,nbar,na,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,beta3,ages0]=prepFluAgeLocsFscape(D,r,stoch,delta)%,U)
 %stoch=1 for SCM(/ABM)
 %Parameters:
-aa=.58;%truscaa;%.58;
-aaR=.91;
+aa=.58;
+%aaR=.91;
 aaU=0;
 alpha=.52;
 alphaR=.56;
@@ -11,10 +11,12 @@ p=2.72;
 pR=2.84;
 pU=2.7;
 gamma=1/2.6;
-%celldist=.5;%km
+celldist=1;%km
 a1immobile=0;
 normaliseKernel=1;
 ageSpec=0;%Chinese K only - not Truscott
+R0=1.8;
+testK=0;%For test cases of K (e.g. random)
 %Adult/child/rural/urban
 aaA=.58;
 aaC=.87;
@@ -43,39 +45,31 @@ C=UKage;
 %C=ones(4);
 Ca=C; Cb=C;
 %If plotting curves, can trimbyk before finding max/min **1**
-na=length(C);
+%na=length(C);%Must match input
 %%
 %Population density:
-[l1,l2]=size(D1);
-n=l1*l2;
+NN=D;
+n=length(NN);
+v=[5,14,45,16]/80;
+na=length(v);
 nbar=n*na;
-%beta_i in here (code at bottom)
+NNbar=[NN*v(1);NN*v(2);NN*v(3);NN*v(4)];
+
 %%
+%{
 %Kernel:
-L=cumsum(ones(n,1));
-L=reshape(L,[l1,l2]);%l1 column, labelled downwards
-L=sparse(L);
-[L1,L2,L3]=find(L);
-L=[L1,L2,L3];
-L=sortrows(L,3);
+L=locs*140;%Approx conversion to km
 [x1,x2]=meshgrid(L(:,1),L(:,1));
 x=(x1-x2).^2;
 [y1,y2]=meshgrid(L(:,2),L(:,2));
 y=(y1-y2).^2;
 r=sqrt(x+y)*celldist;
-%%
-NN1=reshape(D1,n,1); NN2=reshape(D2,n,1); NN3=reshape(D3,n,1); NN4=reshape(D4,n,1);
-NN=sum([NN1,NN2,NN3,NN4],2);
-NN=ceil(NN);
-NN(NN<0)=NaN;
-NN(isnan(NN)==1)=0;
+%}
 %%
 %Age:
-NNbar=[NN1;NN2;NN3;NN4];
 if stoch==1
     NNbar=round(NNbar);
 end
-NN=sum(reshape(NNbar,n,na),2);
 NNrep=repmat(NN,na,1);
 Sstart=repmat(NNbar,1,nbar);
 SstartFrac=NNbar./NNrep; SstartFrac(NNrep==0)=0; SstartFrac=repmat(SstartFrac,1,nbar);
@@ -98,16 +92,23 @@ if ageSpec==0
     K=1./(1+(r./aa).^(p));
     Nalpha=NN'.^alpha;
     Njalpha=repmat(Nalpha,n,1);
-    Nione=repmat(NN,1,n);
-    K=K.*Njalpha.*Nione;
+    %Nione=repmat(NN,1,n);
+    K=K.*Njalpha;%.*Nione;
     %}
     %{
     %Truscott:
-    K=1./(1+(r./truscaa).^3.9)+.3*eye(n);%13.5
+    K=1./(1+(r./8.5).^3.9)+.3*eye(n);
     Nalpha=NN'.^.95;
     Njalpha=repmat(Nalpha,n,1);
     K=K.*Njalpha;
     %}
+    %Test:
+    if testK==1
+        K=rand(n);
+        %K=K+K';
+        %K=K+20*K.*eye(n);
+        %K=K-.9*K.*eye(n);
+    end
     %
     sumK=sum(K,2);
     repK=repmat(sumK,1,n);
@@ -169,6 +170,8 @@ Mj=Kbar'*NNbar;
 Mj(Mj==0)=1;
 Mjover=1./Mj;
 Mjover=repmat(Mjover',nbar,1);
+NNover=1./NNrep; NNover(NN==0)=1;
+Njover=repmat(NNover',nbar,1);
 
 DS=Sstart.*Kbar.*Mjover.*Cbar;
 GS=1/gamma*DS;
@@ -179,9 +182,13 @@ GI=1/gamma*DI;
 DD=(Sstart.*K1.*Mjover)*(Kbar'.*Cbar);
 GD=1/gamma*DD;
 
+D3=Sstart.*Kbar.*Cbar.*Njover;
+G3=1/gamma*D3;
+
 d=eigs(GS,1); R0a=max(d); betaS=R0/R0a;
 d=eigs(GI,1); R0a=max(d); betaI=R0/R0a;
 d=eigs(GD,1); R0a=max(d); betaD=R0/R0a;
+d=eigs(G3,1); R0a=max(d); beta3=R0/R0a;
 %}
 ages0=ages;
 end

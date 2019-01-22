@@ -46,7 +46,7 @@ for i=1:lH
 
 f=X2;%var(X2);
 g=NN2;
-%
+%{
 logN2=log10(NN2);
 maxN=max(NN2);%max(logN2);
 %
