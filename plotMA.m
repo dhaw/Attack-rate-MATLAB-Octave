@@ -14,7 +14,7 @@ n=length(NN);
 plotAll=1;
 %%
 %Comment out if don't want ccpand:
-%
+%{
 thresh=0.005;
 yy=1:tauend;
 X=zeros(1,tauend); Y=X;
@@ -132,6 +132,7 @@ if n>1 && cbaroff~=1
 end
 hold off
 
+%{
 figure
 %yyaxis right
 hold on
@@ -143,7 +144,7 @@ xlabel('Time (years)','FontSize',fs)
 ylabel('cc_{pand}')%('Proportion immune','FontSize',fs) Relative attack
 set(gca,'FontSize',fs);
 axis([tmin,tmax,-1,1])
-legend([h1,h2],'Total immune','Secondary attack','location','SW')
+legend([h2,h1],'Total immune','Secondary attack','location','SW')
 grid on
 grid minor
 box on

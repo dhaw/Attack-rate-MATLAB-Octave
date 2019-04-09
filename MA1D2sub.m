@@ -1,4 +1,4 @@
-function [f,g]=MA1D2sub(eps,cross)
+function [f,g]=MA1D2sub(eps,del,cross)
 %Parameters:
 %eps=.5;
 %reduction=.61915634;=1-cross?
@@ -19,7 +19,7 @@ numseed=10^(-8); seed=numseed;%*NNprob;
 %
 %Theta:
 %Prow1=[0,0,0,0,eps,1-eps];
-Prow1=[0,0,0,0,.5,.5];
+Prow1=[0,0,0,0,.5-del,.5+del];
 %Prow1=[0,.1*ones(1,10)];
 lp1=length(Prow1);
 Prow1=Prow1/sum(Prow1);

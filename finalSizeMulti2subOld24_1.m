@@ -1,10 +1,9 @@
-function [f,g]=finalSizeMulti2sub(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,isdual,numseed,eps,del,cross,randic,tauend)
+function [f,g]=finalSizeMulti2subOld24_1(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,maxN,Kbar,K1,Cbar,betaS,betaI,betaD,isdual,numseed,eps,cross,randic,tauend)
 %This is an upgrade on "MA2subSpace(Debug)"
 %Parameters:
 %solvetype: ODE only
 %eps=.3;
 %cross=.6;
-%randic=1;
 ICdepAge=1;
 if isdual==0
     beta=betaS;
@@ -20,6 +19,7 @@ time=(1:tauend);
 lt=length(time);
 t0=0; tend=1800;
 mu=0;
+%randic=1;
 %%
 %Initial condition (independent of space):
 %Default - total immunity:
@@ -36,7 +36,7 @@ phi1=1; phi2=0;
 seed=numseed;
 %
 %Theta:
-Prow1=[0,0,0,0,.5-del,.5+del];%zeros(1,21); Prow1(end)=1;
+Prow1=[0,0,0,0,.5,.5];%zeros(1,21); Prow1(end)=1;
 lp1=length(Prow1);
 Prow1=Prow1/sum(Prow1);
 Prow2=[0,0,0,1-eps,eps];%Prow1=Prow2; lp1=length(Prow1);
@@ -49,6 +49,7 @@ VV=kron(vover',ones(n,1)); Stake123=repmat(VV,3,1);
 wover=[0,0,0,1/16];
 WW=kron(wover',ones(n,1)); Stake4=repmat(WW,3,1);
 %%
+
 Ni=repmat(NNrep,1,nbar); Nj=Ni';
 Niover=1./Ni; Niover(Ni==0)=1; Njover=Niover';
 Mj=(Kbar')*NNbar;
@@ -71,11 +72,22 @@ else
 end
 %%
 A4=[1,1,1,1;1,0,1,0;0,1,0,1]; B4=[1,0,1,0;0,1,0,1;1,0,1,0;0,1,0,1];
-A=kron(A4,D);
-B=kron(B4,D);
+A=kron(A4,D);%.*repD; is repD necessary here? Also, got dimension mismatch error - odd
+B=kron(B4,D);%.*repD;
+%
+%Rzero=[1-sum(S0);flipud(S0)];
+%Rzero=kron(Rzero,NNbar);
 %%
 znbar=zeros(nbar,1);
 if randic==1
+    %{
+    lp=max(lp1,lp2);
+    %Initial condition if dependent on space:
+    S0space=rand(nbar,4);
+    S0space=S0space./repmat(sum(S0space,2),1,4).*repmat(NNbar,1,4);
+    S0=reshape(S0space(:,1:3),3*nbar,1);
+    S00=S0space(:,4);
+    %}
     %From 1D model:
     if ICdepAge==1
         r=1;
@@ -92,6 +104,7 @@ if randic==1
         Prows(findNZ1)=randNZ;
         rand2=r*rand(nbar,1); repRand=repmat(rand2,1,maxYears1);%rand2=r*rand()
         sumP=sum(Prows,2); repP=repmat(sumP,1,maxYears1); repP(repP==0)=1;
+        %Nratio1=repmat(NNbar./NNrep,1,maxYears1); Nratio1(Nratio1==0)=1;
         X=Prows./repP.*repRand;
         %
         maxYears2=lp2-1;
@@ -107,37 +120,25 @@ if randic==1
         Prows(findNZ2)=randNZ;
         rand2=r*rand(nbar,1); repRand=repmat(rand2,1,maxYears2);%rand2=r*rand()
         sumP=sum(Prows,2); repP=repmat(sumP,1,maxYears2); repP(repP==0)=1;
+        %Nratio2=repmat(NNbar./NNrep,1,maxYears2); Nratio2(Nratio2==0)=1;
         Y=Prows./repP.*repRand;
-        %b1=[znbar,X.*repmat(NNbar,1,maxYears1)]; b2=[znbar,Y.*repmat(NNbar,1,maxYears2)];
-        b1=[X.*repmat(NNbar,1,maxYears1),znbar]; b2=[Y.*repmat(NNbar,1,maxYears2),znbar];
-        %
+        b1=[znbar,X.*repmat(NNbar,1,maxYears1)]; b2=[znbar,Y.*repmat(NNbar,1,maxYears2)];
         %Remove overlap:
-        s01=sum(X,2); s10=sum(Y,2);%s11/s00 surrently not specified
-        Z=s01+s10;
-        s00=Z-1; s00(s00<0)=0;
-        findDef=find(s00);
-        Xfrac=s01(findDef)./Z(findDef); Yfrac=s10(findDef)./Z(findDef);
-        %b1frac=ones(nbar,1); b1frac(findDef)=Xfrac;
-        %b2frac=ones(nbar,1); b2frac(findDef)=Yfrac;
-        %b1(:,1:end-1)=b1(:,1:end-1).*repmat(b1frac,1,maxYears1); b2(:,1:end-1)=b2(:,1:end-1).*repmat(b2frac,1,maxYears2); 
-        %b1(:,2:end)=b1(:,2:end).*repmat(b1frac,1,maxYears1); b2(:,2:end)=b2(:,2:end).*repmat(b2frac,1,maxYears2); 
-        Xtake=Xfrac.*s00(findDef); Ytake=Yfrac.*s00(findDef);
-        s01(findDef)=s01(findDef)-Xtake; s10(findDef)=s10(findDef)-Ytake;
         %
-        %Define s00:
-        %s11=1-s10-s01; 
-        Zmin=min([s01,s10],[],2);
-        s00add=rand(nbar,1).*Zmin;
-        s00=s00+s00add;%/3?
-        s10=s10-s00add; s01=s01-s00add;
-        s11=1-s10-s01-s00;
+        s10=sum(X,2); s01=sum(Y,2);%s11 surrently not specified
+        Z=s10+s01;
+        defMove=Z-1; defMove(defMove<0)=0;
+        findDef=find(defMove);
+        Xfrac=s10(findDef)./Z(findDef); Yfrac=s01(findDef)./Z(findDef);
+        %
+        b1frac=ones(nbar,1); b1frac(findDef)=Xfrac;
+        b2frac=ones(nbar,1); b2frac(findDef)=Yfrac;
+        b1(:,2:end)=b1(:,2:end).*repmat(b1frac,1,maxYears1); b2(:,2:end)=b2(:,2:end).*repmat(b2frac,1,maxYears2); 
+        Xtake=Xfrac.*defMove(findDef); Ytake=Yfrac.*defMove(findDef);
+        s10(findDef)=s10(findDef)-Xtake; s01(findDef)=s01(findDef)-Ytake;
+        s11=zeros(nbar,1); %s11(findDef)=Xtake+Ytake;
         %removed2sub
-        S0star=[s11,s10,s01,s00];
-        S0star(S0star<0)=0;
-        S0sum=sum(S0star,2); S0sum(S0sum==0)=1;
-        S0star=S0star./repmat(S0sum,1,4);
-        %S0star=S0star./sum(S0star);
-        S0=reshape(S0star(:,1:3),3*nbar,1).*repmat(NNbar,3,1);
+        S0=[s11;s10;s01].*repmat(NNbar,3,1);
     else
         error('This bit of code isnt written yet')
     end
@@ -145,16 +146,17 @@ if randic==1
     clear X X1 Y Y1 Z Z1 Nratio1 Nratio2 Nratio3 rsi randNZ rand2 randNZ2 Sdiff sub1 sub2 %s00 s01 s10 s11
     clear maxYears2 maxYears2 numNonZero Prows repRand sumP repP lNZ lpmax
 else
-    %Default - no spatial/age dependence:
-    s00=1-sum(S0); s00=s00*NNbar;%Immune to both
+    %Default - no spatial dependence:
+    S00=1-sum(S0); S00=S00*NNbar;
     S0=kron(S0,NNbar);%/sum(S0);%Number sus to each distinct set of subtypes
     %
     b1=zeros(nbar,lp1); b2=zeros(nbar,lp2);
     %1YIC:
-    %{
-    b1=repmat(s00+S0(2*nbar+1:3*nbar),1,lp1).*[repmat(Prow1(2:end),nbar,1),znbar];
-    b2=repmat(s00+S0(nbar+1:2*nbar),1,lp2).*[repmat(Prow2(2:end),nbar,1),znbar];
-    %}
+    %b1=repmat(S00+S0(2*nbar+1:3*nbar),1,lp1).*[repmat(Prow1(2:end),nbar,1),znbar];
+    %b2=repmat(S00+S0(nbar+1:2*nbar),1,lp2).*[repmat(Prow2(2:end),nbar,1),znbar];
+    %
+    %%Check method/S0 definition above - *Prow if IMMUNE
+    %%b2(:,1:3)=[.4*NNbar,.4*NNbar,.2*NNbar];
 end
 A1=zeros(3*nbar,lt);
 A2=zeros(2*nbar,lt); A2(:,1)=zeros(2*nbar,1);%?? Why re-define 1st column?
@@ -162,8 +164,12 @@ A2=zeros(2*nbar,lt); A2(:,1)=zeros(2*nbar,1);%?? Why re-define 1st column?
 Shat=[S0(1:nbar);S0];%This is Shat(0)
 zn=zeros(length(Shat),1);
 options=odeset('refine',1);
+%xoverFcn=@(t,y)evZero(t,y,nbar); 
+%options=odeset(options,'Events',xoverFcn);
+%thresh=1-1/R0;
 NNrep(NNrep==0)=1;%********26/9/18
 NNrep3=repmat(NNrep,3,1); NNrep4=[NNrep3;NNrep];
+%Rzero=zn;
 seeddot=1;
 for tau=1:lt
 %%
@@ -183,19 +189,13 @@ if tau==plotTau
     Y=yout(:,3*nbar+1:7*nbar);
     Yages=Y(:,1:nbar)+Y(:,nbar+1:2*nbar)+Y(:,2*nbar+1:3*nbar)+Y(:,3*nbar+1:end);
     Ysum=sum(Y,2)/sum(NN);
-    Y1=Y(:,1:nbar)+Y(:,2*nbar+1:3*nbar);
-    Y1=Y1(:,1:n)+Y1(:,n+1:2*n)+Y1(:,2*n+1:3*n)+Y1(:,3*n+1:end);
-    Y2=Y(:,nbar+1:2*nbar)+Y(:,3*nbar+1:end);
-    Y2=Y2(:,1:n)+Y2(:,n+1:2*n)+Y2(:,2*n+1:3*n)+Y2(:,3*n+1:end);
-    Y1sum=sum(Y1,2); Y2sum=sum(Y2,2);
     hold on
-    plot(tout,[Y1sum,Y2sum],'-','linewidth',lw);
+    plot(tout,Yages,'-','linewidth',lw);
     xlabel('Time (days)','FontSize',fs);
     ylabel('Infectives','FontSize',fs);
     set(gca,'FontSize',fs);
-    maxY=max(max(max([Y1sum,Y2sum])))+.01;%Y
-    axis ([0,360,0,maxY])%tend
-    legend('H1','H2','location','NE')
+    maxY=max(max(max(Y)))+.01;
+    axis tight%([0,tend,0,maxY])
     grid on
     grid minor
     hold off
@@ -241,6 +241,8 @@ end
     %%
     %Update S0:
     S0=A1t(1:3*nbar);%*NN;%Assume duration of immunity unrelated to cross infection
+    Rzero=zn;%Vector of Rs
+    %Rzero=[S0(3*nbar+1:end);S0(2*nbar+1:3*n);S0(nbar+1:2*n);S0(1:nbar)];
     %
     %Optional different output - susceptibility at start of season:
     %Need to comment out "A1(:,t)=..." above
@@ -272,6 +274,7 @@ end
 function f=integr8all(t,y,beta,gamma,nbar,A,B,NN,NNrep3,NNrep4,seed,phi1,phi2,tau,seeddot,cross)
 mu=1/1800;%5*360=1800
 phi=1;%phi1-phi2*cos(pi*t/180);
+%S=[y(1:nbar);cross*y(nbar+1:2*nbar);cross*y(2*nbar+1:3*nbar)];%XXXX possibility of cross12 and cross21
 S1=y(1:nbar); S2=y(nbar+1:2*nbar); S3=y(2*nbar+1:3*nbar);
 S=[S1;(1-cross)*S2;(1-cross)*S3];%XXXX
 Shat=[S(1:nbar);S];
@@ -280,8 +283,11 @@ seedf=seed*S*exp(-t).*seeddot;%.* if seeddot is a vector (non-trivial case)
 seedfhat=[seedf(1:nbar);seedf];
 Iscaled=I./NNrep4;
 Sdot=-beta*S.*(A*Iscaled)*phi-seedf;%+mu*R;
+
 Rdot=gamma*I;%-mu*R;
+
 Idot=beta*Shat.*(B*Iscaled)*phi+seedfhat-Rdot;
+
 f=[Sdot;Idot;Rdot];
 end
 

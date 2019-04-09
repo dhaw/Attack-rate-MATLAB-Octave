@@ -21,7 +21,7 @@ f=R1+R2;
 maxAttack=max(max(f));
 %%
 %Comment out if don't want ccpand:
-%
+%{
 thresh=0.005;
 yy=1:tauend;
 X=zeros(1,tauend); Y=X; Z=X;
@@ -97,7 +97,8 @@ figure
     grid on
     grid minor
     box on
-
+%Comment out if don't want ccpand (or total):
+%{
     figure
     subplot(2,1,1)
     hold on
@@ -108,7 +109,7 @@ figure
     %xlabel('Time (years)','FontSize',fs)
     ylabel('R (total)','FontSize',fs)
     axis ([tmin-1,tmax,0,maxAttack]);
-    axis tight
+    %axis tight
     set(gca,'FontSize',fs);
     grid on
     grid minor

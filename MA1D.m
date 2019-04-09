@@ -6,10 +6,10 @@ R0=1.8; gamma=1/2.6;
 NN=1000; n=length(NN);
 demog=1;%Ageing: 1=on
 agemix=1;%Total homog: =0; else specify v - twice
-tauend=500;
+tauend=20100;
 time=(1:tauend);
 lt=length(time);
-t0=0; tend=5000;
+t0=0; tend=3600;
 mu=0;
 phi1=1; phi2=0;
 %NNprob=NNbar/sum(NN); %NNprob=ones(nbar,1)/sum(NNbar);

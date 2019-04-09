@@ -26,7 +26,7 @@ hold off
 set(gca,'fontsize',fs)
 axis ([0,leps+1,-1,1])
 xlabel('\epsilon')
-ylabel('Correlation')
+ylabel('cc_pand')
 grid on
 grid minor
 box on
