@@ -1,0 +1,18 @@
+function f=plotMAdelay(F,G,fp)
+
+[n,lt,thismany]=size(F);
+Fcorr=nan(thismany,lt);
+Gcorr=Fcorr;
+tempv=zeros(thismany,2);
+for i=1:lt
+    tempvi=tempv;
+    parfor j=1:thismany
+        ccf=corrcoef(F(:,i,j),fp);
+        tempv(j,1)=ccf(2);
+        ccg=corrcoef(G(:,i,j),fp);
+        tempvi(j,2)=ccg(2);
+    end
+    Fcorr(:,i)=tempvi(:,1);
+    Gcorr(:,i)=tempvi(:,2);
+end
+Fvar=nanvar(Fcorr,[],2
