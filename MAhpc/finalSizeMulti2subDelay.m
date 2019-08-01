@@ -192,8 +192,8 @@ end
 %}
 cross1=cross;
 [tout,yout]=ode23(@(t,y)integr8all(t,y,beta,gamma,nbar,A,B,NN,NNrep3,NNrep4,seed,phi1,phi2,tau,cross1),[t0,tend],y0,options);
-minAttack=min(yout(end,:));
-maxAttack=max(yout(end,:));
+%minAttack=min(yout(end,:));
+%maxAttack=max(yout(end,:));
 if tau==plotTau
     fs=12; lw=2;
     figure
