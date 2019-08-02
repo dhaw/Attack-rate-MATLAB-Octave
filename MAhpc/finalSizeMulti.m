@@ -15,10 +15,10 @@ else
 end
 demog=1;
 %tauend=1;
-plotTau=0;
+plotTau=1;
 time=(1:tauend);
 lt=length(time);
-t0=0; tend=1800;
+t0=0; tend=360;
 mu=1/80;%In ODE code
 phi1=1; phi2=0;
 NN0=NNrep; NN0(NNrep==0)=1;
@@ -128,7 +128,7 @@ A1=zeros(n,lt);
 A2=A1;
 N0=NN; N0(NN==0)=1;
 %NNprob=NNbar/sum(NN); NNprob=ones(nbar,1)/sum(NNbar);
-seed=numseed;%*NNprob;
+seed=10^(-numseed);%*NNprob;
 seedvec=zeros(nbar,1); seedvec(2*n+1:3*n)=seed*ones(n,1);
 %seedvec=seed*ones(nbar,1);
 thresh=0;%Remove from ODE solver
@@ -144,7 +144,7 @@ for t=1:lt
     %
     else%solvetype=2/3
     Zsol=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,Z0,beta,ages0,t,t0,tend,zn,phi1,phi2,seed,solvetype,thresh,alpha,seedvec,plotTau);
-    minAttack=min(yout(end,:)); maxAttack=max(yout(end,:));
+    minAttack=min(Zsol); maxAttack=max(Zsol);
 %
     if minAttack<0 
         error('Attack rate not in [0,1]')
@@ -194,50 +194,51 @@ end
 function f=XODEsolveAllMulti(gamma,NN,n,nbar,NNbar,NNrep,NN0,minNind,maxNind,D,ic,beta,ages0,tau,t0,tend,zn,phi1,phi2,seed,solvetype,thresh,alpha,seedvec,plotTau)
 icR=ic.*NNrep;
 y0=[NNbar-icR;zn;icR];
+%{
 cond=sum(icR<thresh);
 if cond==0
     seed=0;
 end
-%
+%}
 if solvetype==2
-[tout,yout]=ode45(@(t,y)integr8all(t,y,beta,gamma,n,nbar,NN,NN0,D,seed,phi1,phi2,alpha,seedvec),[t0,tend],y0);
-%Incidence curve in here:
-%
-if tau==plotTau
-figure
-fs=12; lw=2;
-Y=yout(:,nbar+1:2*nbar); %Z=yout(:,2*nbar+1:3*nbar);
-%Y=sum(Y,2);
-%Y1=Y(:,minNind)+Y(:,minNind+n)+Y(:,minNind+2*n)+Y(:,minNind+3*n); Y1=Y1/NN(minNind);
-%Y2=Y(:,maxNind)+Y(:,maxNind+n)+Y(:,maxNind+2*n)+Y(:,maxNind+3*n); Y2=Y2/NN(maxNind);
-Ysum=sum(Y,2);
-Yall=Y(:,1:n)+Y(:,n+1:2*n)+Y(:,2*n+1:3*n)+Y(:,3*n+1:end);
-Yall=abs(Yall);%****cheat ;)
-%
-%Unlogged plots:
-hold on
-%plot(tout,Y1,'--','linewidth',lw,'color',[.165,.31,.431]);%[.165,.31,.431][.447,.553,.647]
-%plot(tout,Y2,'-','linewidth',lw,'color',[.165,.31,.431]);
-plot(tout,Ysum,'k','linewidth',lw);
-plot(tout,Yall);
-%}
-%{
-%Logged plots:
-semilogy(tout,Ysum,'k','linewidth',lw);
-hold on
-semilogy(tout,Yall);
-%}
-xlabel('Time (days)','FontSize',fs);
-ylabel('Prevalence','FontSize',fs);
-set(gca,'FontSize',fs);
-maxY=max(Ysum);
-%axis([0,tend,0,maxY])
-axis ([0,tend,0,maxY])
-%legend('Min','Max','location','NE')
-grid on
-grid minor
-hold off
-end
+    [tout,yout]=ode45(@(t,y)integr8all(t,y,beta,gamma,n,nbar,NN,NN0,D,seed,phi1,phi2,alpha,seedvec),[t0,tend],y0);
+    %Incidence curve in here:
+    %
+    if tau==plotTau
+        figure
+        fs=12; lw=2;
+        Y=yout(:,nbar+1:2*nbar); %Z=yout(:,2*nbar+1:3*nbar);
+        %Y=sum(Y,2);
+        %Y1=Y(:,minNind)+Y(:,minNind+n)+Y(:,minNind+2*n)+Y(:,minNind+3*n); Y1=Y1/NN(minNind);
+        %Y2=Y(:,maxNind)+Y(:,maxNind+n)+Y(:,maxNind+2*n)+Y(:,maxNind+3*n); Y2=Y2/NN(maxNind);
+        Ysum=sum(Y,2);
+        Yall=Y(:,1:n)+Y(:,n+1:2*n)+Y(:,2*n+1:3*n)+Y(:,3*n+1:end);
+        Yall=abs(Yall);%****cheat ;)
+        %
+        %Unlogged plots:
+        hold on
+        %plot(tout,Y1,'--','linewidth',lw,'color',[.165,.31,.431]);%[.165,.31,.431][.447,.553,.647]
+        %plot(tout,Y2,'-','linewidth',lw,'color',[.165,.31,.431]);
+        plot(tout,Ysum,'k','linewidth',lw);
+        plot(tout,Yall);
+        %}
+        %{
+        %Logged plots:
+        semilogy(tout,Ysum,'k','linewidth',lw);
+        hold on
+        semilogy(tout,Yall);
+        %}
+        xlabel('Time (days)','FontSize',fs);
+        ylabel('Prevalence','FontSize',fs);
+        set(gca,'FontSize',fs);
+        maxY=max(Ysum);
+        %axis([0,tend,0,maxY])
+        axis ([0,tend,0,maxY])
+        %legend('Min','Max','location','NE')
+        grid on
+        grid minor
+        hold off
+    end
 %}
 rec0=yout(end,2*nbar+1:end)+yout(end,nbar+1:2*nbar);%******** Truncation - add infectious to rercovered?
 f=rec0';
@@ -246,7 +247,7 @@ elseif solvetype==3
 %ic1=round(NNbar/1000); neg=y0(1:nbar)-ic1; neg(neg>0)=0; ic1=ic1+neg;
 %ic1=round(y0(1:nbar)/500);
 y1=round(y0);%+[-ic1;ic1;zn];
-f=stochSim(y1,beta,gamma,n,nbar,NN,NN0,D,seed,phi1,phi2,tau,alpha);
+f=stochSim(y1,beta,gamma,n,nbar,NN,NN0,D,seed,phi1,phi2,tau,alpha,plotTau);
 %}
 end
 end
@@ -267,7 +268,7 @@ Rdot=gamma*I;%-mu*R;
 f=[Sdot;Idot;Rdot];
 end
 %%
-function f=stochSim(y,beta,gamma,n,nbar,NN,N0,D,seed,phi1,phi2,tau,alpha)
+function f=stochSim(y,beta,gamma,n,nbar,NN,N0,D,seed,phi1,phi2,tau,alpha,plotTau)
 %Feed in mu if required
 factor=6;
 tend=360*factor; beta=beta/factor; gamma=gamma/factor;
@@ -286,19 +287,56 @@ R=y(2*nbar+1:end);
 
 %Different from here:
 i=1;
-threshold=30;%Number of time-steps for necessary simulation/seed
+threshold=30*factor;%Number of time-steps for necessary simulation/seed
 while i<tend && (i<threshold || sum(I)>0)%At least 30 time-steps
-phi=1;%phi1-phi2*cos(pi*i*f1/180);%Just seed here
-Sout=1-exp(-phi*(beta*(D*(I./N0).^alpha)+seed*heaviside(threshold-i)));%+mu*R;.^alpha
-Sout(Sout>1)=1;
-Sout=binornd(S,Sout); Sout(S==0)=0;
-S=S-Sout; I=I+Sout;
-%
-Iout=1-exp(-gamma);
-Iout=binornd(I,Iout);
-I=I-Iout; R=R+Iout;
-Vec(:,i)=I;
-i=i+1;
+    phi=1;%phi1-phi2*cos(pi*i*f1/180);%Just seed here
+    Sout=1-exp(-phi*(beta*(D*(I./N0).^alpha)+seed*heaviside(threshold-i)));%+mu*R;.^alpha
+    Sout(Sout>1)=1;
+    Sout=binornd(S,Sout); Sout(S==0)=0;
+    S=S-Sout; I=I+Sout;
+    %
+    Iout=1-exp(-gamma);
+    Iout=binornd(I,Iout);
+    I=I-Iout; R=R+Iout;
+    Vec(:,i)=I;
+    i=i+1;
+end
+if tau==plotTau
+    figure
+    fs=12; lw=2;
+    Y=Vec'; %Z=yout(:,2*nbar+1:3*nbar);
+    tout=(1:size(Y,1))/factor;
+    %Y=sum(Y,2);
+    %Y1=Y(:,minNind)+Y(:,minNind+n)+Y(:,minNind+2*n)+Y(:,minNind+3*n); Y1=Y1/NN(minNind);
+    %Y2=Y(:,maxNind)+Y(:,maxNind+n)+Y(:,maxNind+2*n)+Y(:,maxNind+3*n); Y2=Y2/NN(maxNind);
+    Ysum=sum(Y,2);
+    Yall=Y(:,1:n)+Y(:,n+1:2*n)+Y(:,2*n+1:3*n)+Y(:,3*n+1:end);
+    Yall=abs(Yall);%****cheat ;)
+    %
+    %Unlogged plots:
+    hold on
+    %plot(tout,Y1,'--','linewidth',lw,'color',[.165,.31,.431]);%[.165,.31,.431][.447,.553,.647]
+    %plot(tout,Y2,'-','linewidth',lw,'color',[.165,.31,.431]);
+    plot(tout,Ysum,'k','linewidth',lw);
+    plot(tout,Yall);
+    %}
+    %{
+    %Logged plots:
+    semilogy(tout,Ysum,'k','linewidth',lw);
+    hold on
+    semilogy(tout,Yall);
+    %}
+    xlabel('Time (days)','FontSize',fs);
+    ylabel('Prevalence','FontSize',fs);
+    set(gca,'FontSize',fs);
+    maxY=max(Ysum);
+    %axis([0,tend,0,maxY])
+    axis tight%([0,tend,0,maxY])
+    %legend('Min','Max','location','NE')
+    grid on
+    grid minor
+    box on
+    hold off
 end
 %{
 Vsum=sum(Vec,1);%/sum(NN);

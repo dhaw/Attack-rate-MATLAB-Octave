@@ -4,7 +4,7 @@ function [f,g]=finalSizeMultiAll(gamma,n,nbar,na,NN,NNbar,NNrep,minNind,maxNind,
 %Parameters:
 
 solvetype=3;%2. ODE; 3. stoch
-factor=24;%For stoch model: timestep=1/factor days
+factor=6;%For stoch model: timestep=1/factor days
 
 %eps=.3;
 %cross=.6;
@@ -204,7 +204,7 @@ if solvetype==2
 else
     %factor=12;
     y1=round(y0);%+[-ic1;ic1;zn];
-	yout=stochSim(y1,beta,gamma,n,nbar,seed,A,B,cross1,NNrep4,factor);
+	yout=stochSim(y1,beta,gamma,n,nbar,seed,tend,A,B,cross1,NNrep4,factor,tau);
     tout=1/factor:1/factor:size(yout,1)/factor;
 end
     
@@ -229,7 +229,7 @@ if tau==plotTau
     set(gca,'FontSize',fs);
     maxY=max(max(max([Y1sum,Y2sum])))+.01;%Y
     axis([0,tend,0,maxY])%tend
-    legend('H1','H2','location','NE')
+    legend('I_1','I_2','location','NE')
     grid on
     grid minor
     box on
@@ -343,50 +343,54 @@ end
 
 %%
 
-function f=stochSim(y,beta,gamma,n,nbar,seed,A,B,cross,NNrep4,factor)%(y,beta,gamma,n,nbar,NN,N0,D,seed,phi1,phi2,tau,alpha)
+function f=stochSim(y,beta,gamma,n,nbar,seed,tend,A,B,cross,NNrep4,factor,tau)%(y,beta,gamma,n,nbar,NN,N0,D,seed,phi1,phi2,tau,alpha)
 %mu=1/1800;%5*360=1800
 phi=1;%phi1-phi2*cos(pi*t/180);
 %factor=6;
-tend=360*factor; beta=beta/factor; gamma=gamma/factor; seed=seed/factor;
+tend=tend*factor; beta=beta/factor; gamma=gamma/factor; seed=seed/factor;
 Vec=zeros(11*nbar,tend);
+cross1m=1-cross;
 %
 mu=1/1800;%5*360=1800
 S1=y(1:nbar); S2=y(nbar+1:2*nbar); S3=y(2*nbar+1:3*nbar);
-S=[S1;S2;S3];
-S1123=[S1;S];
-Seff=[S1;(1-cross)*S2;(1-cross)*S3];%XXXX
-Shat=[S1;S1;(1-cross)*S2;(1-cross)*S3];%[S(1:nbar);S];
+%S1123=[S1;S];
+Seff=[S1;cross1m*S2;cross1m*S3];%XXXX
+Shat=[S1;S1;cross1m*S2;cross1m*S3];%[S(1:nbar);S];
 I=y(3*nbar+1:7*nbar);
 %%
 %{
+%Seeding method 1: modified FOI
+seedf=seed;
+seedfhat=repmat(seed(nbar+1:end),2,1);
+S=[S1;S2;S3];
+Bhalf=B(1:2*nbar,:);
+%}
+%
 %Seeding method 2: infect a few
-seedNum=20;
+seedNum=5;
 %seedLocs=randsample(4*n,seedNum);
 seedfhat=0;
 %Sfrom=floor(Seff);
 %fromInd=find(Sfrom>10);%Needs to be >2
 %toSeed=randsample(fromInd,20);
-toSeed=randsample(4*nbar,seedNum,true,Shat);%Potential for I001+I002>S00
+toSeed=randsample(4*nbar,seedNum,true,Shat);%Potential for I111+I112>S11
 I(toSeed)=1;
-fromS00=reshape(I(1:2*nbar),nbar,2);
-fromS00=sum(fromS00,2);
-S(1:nbar)=S(1:nbar)-fromS00;
+fromS11=reshape(I(1:2*nbar),nbar,2);
+fromS11=sum(fromS11,2);
+S1=S1-fromS11;
 %}
 %%
-%seedf=seed;
-%seedfhat=repmat(seed(nbar+1:end),2,1);
 i=1;
 threshold=30*factor;%Number of time-steps for necessary simulation/seed
 R=zeros(4*nbar,1);
-Bhalf=B(1:2*nbar,:);
 while i<tend && (i<threshold || max(I)>0)%At least 30 time-steps/days (*factor)
+    %{
+    %Method 1:
     %
-    %Seeding method 1: modified FOI
     %seedf=seed.*Seff;%*exp(-t);%Changed for delay - seeddot removed, seed in matrix multiplication
     %Sout=1-exp(-beta*(S-seedf).*(A*Iscaled)*phi)+seedf*heaviside(threshold-i);
     %
-    seedfhat=repmat(seed(nbar+1:end),2,1).*Shat;%*exp(-t);%Change for delay?
-    %
+    %seedfhat=repmat(seed(nbar+1:end),2,1).*Shat;%*exp(-t);%Change for delay?
     Iscaled=beta*(I+seedfhat)./NNrep4;%+seedfhat.*Shat;
     Sout=1-exp(-beta*Seff.*(A*Iscaled)*phi);
     Sout(Sout>1)=1;
@@ -398,16 +402,31 @@ while i<tend && (i<threshold || max(I)>0)%At least 30 time-steps/days (*factor)
     splitNum=ceil(splitNum);%****
     Sout(1:nbar)=sum(splitNum,2);
     Iin=[reshape(splitNum,2*nbar,1);Sout(nbar+1:end)];
-    %}
     S=S-Sout; I=I+Iin;
+    %}
     %
+    %Method 2:
+    Iscaled=I./NNrep4;%+seedfhat.*Shat;
+    Iin=1-exp(-beta*(B*Iscaled)*phi);
+    %Infect with S1:
+    I111=binornd(S1,Iin(1:nbar)); I111(S1==0)=0; %I111(Iin(1:nbar)==1)=0;
+    S1=S1-I111;
+    I101=binornd(round(S2*cross1m),Iin(2*nbar+1:3*nbar)); I101(S2==0)=0; %I101(Iin(2*nbar+1:3*nbar)==1)=0;
+    S2=S2-I101;
+    I112=binornd(S1,Iin(nbar+1:2*nbar)); I112(S1==0)=0; %I112(Iin(nbar+1:2*nbar)==1)=0;
+    S1=S1-I112;
+    I012=binornd(round(S3*cross1m),Iin(3*nbar+1:end)); I012(S3==0)=0; %I012(Iin(3*nbar+1:end)==1)=0;
+    S3=S3-I012;
+    S=[S1;S2;S3];
+    I=I+[I111;I112;I101;I012];
+    %}
     Iout=1-exp(-gamma);
     Iout=binornd(I,Iout);
     I=I-Iout; R=R+Iout;
     Vec(:,i)=[S;I;R];
     
     S1=S(1:nbar); S2=S(nbar+1:2*nbar); S3=S(2*nbar+1:3*nbar);
-    Seff=[S1;(1-cross)*S2;(1-cross)*S3];%XXXX
+    %Seff=[S1;(1-cross)*S2;(1-cross)*S3];%XXXX
     Shat=[S1;S1;(1-cross)*S2;(1-cross)*S3];
     i=i+1;
 end
@@ -446,3 +465,17 @@ end
     %Check total infections in S00****
     Sout=[Iin(1:nbar)+Iin(nbar+1:2*nbar);Iin(2*nbar+1:end)];
     %}
+%{
+    Iscaled=beta*(I+seedfhat)./NNrep4;%+seedfhat.*Shat;
+    Sout=1-exp(-beta*Seff.*(A*Iscaled)*phi);
+    Sout(Sout>1)=1;
+    Sout=binornd(S,Sout); Sout(S==0)=0; Sout(isnan(Sout)==1)=0;
+    Ssplit=Sout(1:nbar);
+    splitRatio=Bhalf*Iscaled;
+    splitRatio=reshape(splitRatio,nbar,2);
+    splitNum=splitRatio.*repmat(sum(splitRatio,2),1,2).*repmat(Ssplit,1,2);
+    splitNum=ceil(splitNum);%****
+    Sout(1:nbar)=sum(splitNum,2);
+    Iin=[reshape(splitNum,2*nbar,1);Sout(nbar+1:end)];
+    %}
+    %S=S-Sout; I=I+Iin;

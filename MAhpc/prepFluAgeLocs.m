@@ -15,7 +15,7 @@ celldist=1;%km
 a1immobile=0;
 normaliseKernel=1;
 ageSpec=0;%Chinese K only - not Truscott
-R0=1.8;
+R0=1.8;%.0005;
 testK=0;%For test cases of K (e.g. random)
 %Adult/child/rural/urban
 aaA=.58;
